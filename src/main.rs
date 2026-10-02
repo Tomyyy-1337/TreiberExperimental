@@ -1,8 +1,8 @@
 mod global;
-mod server;
+mod frontend;
 
 use tokio::{runtime::LocalOptions, task};
-use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::RouterBuilderRuntimeExt};
+use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::RouterBuilderRuntimeExt};
 
 use crate::global::Global;
 
@@ -37,6 +37,7 @@ fn main() {
             topcoat::start(
                 Router::builder()
                     .discover()
+                    .cookies()
                     .assets(AssetBundle::load().unwrap())
                     .compression(Compression::new().brotli(false).level(CompressionLevel::Fastest))
                     .runtime()
