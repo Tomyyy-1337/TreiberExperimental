@@ -1,0 +1,16 @@
+.navbar {
+    display: flex;
+    gap: 1rem;
+}
+
+.navbar-link {
+    text-decoration: none;
+    color: black;
+    min-width: 100px;
+    text-align: center;
+}
+
+.navbar-link.active {
+    font-weight: bold;
+}
+
