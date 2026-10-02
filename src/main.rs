@@ -16,11 +16,13 @@ static SETTINGS: Global<Settings> = Global::new(Settings {
 
 struct SharedState {
     counter: u64,
+    battery_percentage: u8,
 }
 
 static SHARED_STATE: Global<SharedState> = Global::new(
     SharedState {
         counter: 0,
+        battery_percentage: 0,
     }
 );
 
@@ -31,7 +33,6 @@ fn main() {
         .build_local(LocalOptions::default())
         .unwrap()
         .block_on(async {
-
             task::spawn_local(increment_counter());
 
             topcoat::start(
@@ -52,7 +53,8 @@ async fn increment_counter() {
     loop {
         SHARED_STATE.modify(|state| {
             state.counter += 1;
+            state.battery_percentage = (state.battery_percentage + 2) % 101;
         });
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
 }

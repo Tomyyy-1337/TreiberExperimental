@@ -5,7 +5,7 @@ use crate::{SETTINGS, frontend::layout::back_button_layout};
 #[page("/settings/camera")]
 pub async fn settings_camera() -> Result<impl View> {
     Ok(view! { back_button_layout(slot: Slot::new(view! {
-        <h2> "Settings Camera Page" </h2>
+        <h2> "Kamera Einstellungen" </h2>
 
         hdr_settings()
     }))})

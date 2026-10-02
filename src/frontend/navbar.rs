@@ -1,7 +1,7 @@
 use topcoat::{Result, context::Cx, router::request::uri, view::{View, attributes, class, component, view}};
 
 #[component]
-pub async fn nav(cx: &Cx) -> Result<impl View> {
+pub async fn navbar(cx: &Cx) -> Result<impl View> {
     let pages = vec![
         ("/", "Home"),
         ("/fahrtenbuch", "Fahrtenbuch"),

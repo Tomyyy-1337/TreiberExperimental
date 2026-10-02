@@ -1,6 +1,6 @@
-use topcoat::{Result, asset::{Asset, asset}, context::Cx, router::{Slot, page}, runtime::connected, view::{View, component, emit, live, view}};
+use topcoat::{Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cookies}, router::{Slot, page}, runtime::{connected, signal}, view::{View, class, component, emit, live, view}};
 
-use crate::{SHARED_STATE, frontend::layout::nav_layout};
+use crate::{SHARED_STATE, frontend::{battery_status::battery_status, layout::nav_layout}};
 
 pub const MEDIAMTX_READER: Asset = asset!("../../static/mediamtx-reader.js");
 const MEDIAMTX_WEBRTC_URL: &str = "http://localhost:8889/camera/whep";
@@ -8,10 +8,10 @@ const MEDIAMTX_WEBRTC_URL: &str = "http://localhost:8889/camera/whep";
 #[page("/")]
 async fn camera() -> Result<impl View> {
     Ok(view! { nav_layout(slot: Slot::new(view! {
-        <p> "Camera Page" </p>
-
         stream_player()
 
+        battery_status()
+        
         live_data()
     }))})
 }
@@ -19,13 +19,16 @@ async fn camera() -> Result<impl View> {
 #[component]
 pub async fn stream_player() -> Result<impl View> {
     Ok(view! {
-        <div
-            class="live-video-shell"
-            data-live-config=""
-            data-url=(MEDIAMTX_WEBRTC_URL)
-        >
-            <video data-live-video="" autoplay="" playsinline="" muted=""></video>
-        </div>
+        <section>
+            <div
+                class="stream_player-live-video-shell"
+                data-live-config=""
+                data-url=(MEDIAMTX_WEBRTC_URL)
+            >
+                <video data-live-video="" autoplay="" playsinline="" muted=""></video>
+            </div>
+        </section>
+
         <script type="module" src=(MEDIAMTX_READER)></script>
     })
 }

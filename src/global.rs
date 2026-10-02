@@ -14,6 +14,11 @@ impl<T> Global<T> {
         let value = unsafe { &mut *self.0.get() };
         f(value)
     }
+
+    pub fn set(&self, value: T) {
+        let slot = unsafe { &mut *self.0.get() };
+        *slot = value;
+    }
 }
 
 impl<T> Global<Option<T>> {
