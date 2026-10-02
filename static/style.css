@@ -14,3 +14,16 @@
     font-weight: bold;
 }
 
+.live-video-shell {
+    width: min(100%, 960px);
+    aspect-ratio: 16 / 9;
+    background: #111;
+}
+
+.live-video-shell video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+

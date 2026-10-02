@@ -3,6 +3,8 @@ use topcoat::{Result, asset::{Asset, asset}, context::Cx, router::{Slot, layout,
 use crate::{SETTINGS, SHARED_STATE};
 
 const STYLESHEET: Asset = asset!("../static/style.css");
+const MEDIAMTX_READER: Asset = asset!("../static/mediamtx-reader.js");
+const MEDIAMTX_WEBRTC_URL: &str = "http://localhost:8889/camera/whep";
 
 #[layout("/")]
 async fn main_layout(slot: Slot<'_>) -> Result<impl View> {
@@ -68,9 +70,25 @@ async fn nav(cx: &Cx) -> Result<impl View> {
 async fn camera() -> Result<impl View> {
     Ok(view! { nav_layout(slot: Slot::new(view! {
         <p> "Camera Page" </p>
-        <p> "Live Data: " </p>
+
+        stream_player()
+
         live_data()
     }))})
+}
+
+#[component]
+async fn stream_player() -> Result<impl View> {
+    Ok(view! {
+        <div
+            class="live-video-shell"
+            data-live-config=""
+            data-url=(MEDIAMTX_WEBRTC_URL)
+        >
+            <video data-live-video="" autoplay="" playsinline="" muted=""></video>
+        </div>
+        <script type="module" src=(MEDIAMTX_READER)></script>
+    })
 }
 
 #[component]
