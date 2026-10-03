@@ -45,8 +45,7 @@ pub async fn exposure_settings(cx: &Cx) -> Result<impl View> {
 #[procedure]
 pub async fn set_exposure(value: String) -> Result<()> {
     let value = value.parse::<f32>().unwrap_or(0.0);
-    CAMERA_INTERFACE.modify(|s| s.exposure_compenstion = value);
-    CAMERA_INTERFACE.send_to_camera();
+    CAMERA_INTERFACE.modify_and_send(|s| s.exposure_compenstion = value);
     println!("Exposure compensation set to: {}", value);
     Ok(())
 }
@@ -71,8 +70,7 @@ pub async fn hdr_settings(cx: &Cx) -> Result<impl View> {
 #[procedure]
 pub async fn toggle_hdr() -> Result<bool> {
     let current = CAMERA_INTERFACE.hdr_enabled;
-    CAMERA_INTERFACE.modify(|s| s.hdr_enabled = !current);
-    CAMERA_INTERFACE.send_to_camera();
+    CAMERA_INTERFACE.modify_and_send(|s| s.hdr_enabled = !current);
     println!("HDR toggled, new value: {}", !current);
     Ok(!current)
 }

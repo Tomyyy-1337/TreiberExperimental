@@ -35,6 +35,16 @@ pub struct CameraInterface {
     pub bitrate: u32,
 }
 
+impl Global<CameraInterface> {
+    pub fn modify_and_send<F>(&self, f: F)
+    where
+        F: FnOnce(&mut CameraInterface),
+    {
+        self.modify(|s| f(s));
+        self.send_to_camera();
+    }
+}
+
 impl CameraInterface {
     pub fn send_to_camera(&self) {
         let client = Client::builder().build().unwrap();
