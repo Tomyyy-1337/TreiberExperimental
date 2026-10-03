@@ -1,5 +1,4 @@
 use topcoat::{Result, context::Cx, router::{Slot, page}, runtime::{Event, procedure, signal, Signal}, view::{View, component, view}};
-
 use crate::{backend::camera_interface::CAMERA_INTERFACE, frontend::layouts::back_button_layout::back_button_layout};
 
 #[page("/settings/camera")]

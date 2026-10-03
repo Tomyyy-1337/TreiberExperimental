@@ -1,13 +1,13 @@
 html[data-theme="light"] {
     --background: #fff;
-    --text: #000;
     --section-background: #f0f0f0;
+    --text: #000;
 }
 
 html[data-theme="dark"] {
     --background: #111;
-    --text: #fff;
     --section-background: #1a1a1a;
+    --text: #fff;
 }
 
 a, button {
