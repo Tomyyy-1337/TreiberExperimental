@@ -7,7 +7,7 @@ pub async fn battery_status(cx: &Cx) -> Result<impl View> {
     Ok(view! {
         (live! { 
             let mut timer = tokio::time::interval(std::time::Duration::from_secs(5));
-            
+
             loop {
                 let attributes = attributes! {
                     style = (match SHARED_STATE.battery_percentage {
@@ -28,7 +28,7 @@ pub async fn battery_status(cx: &Cx) -> Result<impl View> {
                         </svg>
                         <span class="battery_status-span">{(SHARED_STATE.battery_percentage)}"%"</span>
                     </div>
-                }?;
+                }?; 
                 
                 if !connected(cx) {
                     break Ok(token);

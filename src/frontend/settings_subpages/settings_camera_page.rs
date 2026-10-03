@@ -1,6 +1,6 @@
 use topcoat::{Result, context::Cx, router::{Slot, page}, runtime::{procedure, signal}, view::{View, component, view}};
 
-use crate::{SETTINGS, frontend::layout::back_button_layout};
+use crate::{SETTINGS, frontend::layouts::back_button_layout::back_button_layout};
 
 #[page("/settings/camera")]
 pub async fn settings_camera() -> Result<impl View> {

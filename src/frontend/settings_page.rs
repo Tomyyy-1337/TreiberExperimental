@@ -1,6 +1,6 @@
 use topcoat::{Result, router::{Slot, page}, view::{Child, View, component, view}};
 
-use crate::frontend::layout::nav_layout;
+use crate::frontend::layouts::nav_layout::nav_layout;
 
 #[page("/settings")]
 pub async fn settings() -> Result<impl View> {

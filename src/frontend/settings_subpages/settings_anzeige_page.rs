@@ -1,6 +1,6 @@
 use topcoat::{Result, context::Cx, cookie::{Cookies, cookies}, router::{Slot, page}, runtime::signal, view::{View, component, view}};
 
-use crate::{frontend::{layout::back_button_layout}};
+use crate::{frontend::{layouts::back_button_layout::back_button_layout}};
 
 #[page("/settings/anzeige")]
 pub async fn settings_anzeige() -> Result<impl View> {

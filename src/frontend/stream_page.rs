@@ -1,6 +1,6 @@
 use topcoat::{Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cookies}, router::{Slot, page}, runtime::{connected, signal}, view::{View, class, component, emit, live, view}};
 
-use crate::{SHARED_STATE, frontend::{battery_status::battery_status, layout::nav_layout}};
+use crate::{SHARED_STATE, frontend::{icons::battery_status::battery_status, layouts::nav_layout::nav_layout}};
 
 pub const MEDIAMTX_READER: Asset = asset!("../../static/mediamtx-reader.js");
 const MEDIAMTX_WEBRTC_URL: &str = "http://localhost:8889/camera/whep";

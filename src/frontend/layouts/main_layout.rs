@@ -1,9 +1,7 @@
 use topcoat::{Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cookies}, router::{Slot, layout}, view::{View, view}};
 
-use crate::frontend::navbar::navbar;
-
-pub const STYLESHEET: Asset = asset!("../../static/style.css");
-pub const SCRIPT: Asset = asset!("../../static/script.js");
+pub const STYLESHEET: Asset = asset!("../../../static/style.css");
+pub const SCRIPT: Asset = asset!("../../../static/script.js");
 
 #[layout("/")]
 pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
@@ -24,31 +22,5 @@ pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
                 (slot)
             </body>
         </html>
-    })
-}
-
-
-#[layout]
-pub async fn nav_layout(slot: Slot<'_>) -> Result<impl View> {
-    Ok(view! {
-        <div class="container">
-            <section>
-                <h1> "Ruder Cam Beta" </h1>
-            </section>
-            
-            <section>
-                navbar()
-            </section>
-
-            (slot)
-        </div>
-    })
-}
-
-#[layout]
-pub async fn back_button_layout(slot: Slot<'_>) -> Result<impl View> {
-    Ok(view! {
-        <a href="/settings"> "Go Back" </a>
-        (slot)
     })
 }
