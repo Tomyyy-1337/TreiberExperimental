@@ -8,3 +8,4 @@ topcoat = { version = "0.9.0", features = ["asset", "fs", "runtime", "websocket"
 tokio = { version = "1.53.1", features = ["full"] }
 chrono = "0.4.45"
 serde = { version = "1.0", features = ["derive"] }
+reqwest = { version = "0.13.5", features = ["json"], default-features = false }

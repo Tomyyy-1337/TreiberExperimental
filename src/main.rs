@@ -1,18 +1,11 @@
 mod global;
 mod frontend;
+mod backend;
 
 use tokio::{runtime::LocalOptions, task};
 use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::RouterBuilderRuntimeExt};
 
 use crate::global::Global;
-
-struct Settings {
-    hdr: bool,
-}
-
-static SETTINGS: Global<Settings> = Global::new(Settings {
-    hdr: true,
-});
 
 struct SharedState {
     counter: u64,
