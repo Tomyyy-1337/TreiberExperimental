@@ -14,17 +14,24 @@ pub async fn settings_camera() -> Result<impl View> {
 
 #[component]
 pub async fn exposure_settings(cx: &Cx) -> Result<impl View> {
-    let exposure_signal: Signal<String> = signal(cx, || CAMERA_INTERFACE.exposure_compenstion.to_string());
+    let exposure_signal: Signal<String> = signal(cx, || format!("{:.1}", CAMERA_INTERFACE.exposure_compenstion));
 
     Ok(view! {
         <h3> "Exposure Compensation" </h3>
-        <p> "Current exposure compensation: " $(exposure_signal.get()) </p>
+        <p> "Current exposure compensation: " $({
+            let ev = exposure_signal.get();
+            let ev_formated = raw!{
+                "Number(${ev}).toFixed(1)",
+                ev
+            };
+            ev_formated
+        }) </p>
         <input
             type="range"
             min=(-3.0)
             max=(3.0)
             step=(0.5)  
-            value=(CAMERA_INTERFACE.exposure_compenstion)
+            value=(exposure_signal.get_untracked())
             @input=$(async |event: Event| {
                 exposure_signal.set(event.target.value);
             })
@@ -37,7 +44,8 @@ pub async fn exposure_settings(cx: &Cx) -> Result<impl View> {
 
 #[procedure]
 pub async fn set_exposure(value: String) -> Result<()> {
-    CAMERA_INTERFACE.modify(|s| s.exposure_compenstion = value.parse().unwrap_or(0.0));
+    let value = value.parse::<f32>().unwrap_or(0.0);
+    CAMERA_INTERFACE.modify(|s| s.exposure_compenstion = value);
     CAMERA_INTERFACE.send_to_camera();
     println!("Exposure compensation set to: {}", value);
     Ok(())
@@ -45,7 +53,7 @@ pub async fn set_exposure(value: String) -> Result<()> {
 
 #[component]
 pub async fn hdr_settings(cx: &Cx) -> Result<impl View> {
-    let hdr_signal = signal(cx, || CAMERA_INTERFACE.hdr_enabled);
+    let hdr_signal: Signal<bool> = signal(cx, || CAMERA_INTERFACE.hdr_enabled);
 
     Ok(view! {
         <h3> "HDR" </h3>
@@ -66,5 +74,5 @@ pub async fn toggle_hdr() -> Result<bool> {
     CAMERA_INTERFACE.modify(|s| s.hdr_enabled = !current);
     CAMERA_INTERFACE.send_to_camera();
     println!("HDR toggled, new value: {}", !current);
-    Ok(!current )
+    Ok(!current)
 }
