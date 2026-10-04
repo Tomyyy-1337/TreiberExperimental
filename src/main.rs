@@ -5,7 +5,7 @@ mod backend;
 use tokio::{runtime::LocalOptions, task};
 use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::RouterBuilderRuntimeExt};
 
-use crate::global::Global;
+use crate::{backend::camera_interface::{self, CAMERA_INTERFACE, CameraInterface, FocusMode, Metering}, global::Global}; 
 
 struct SharedState {
     counter: u64,
@@ -26,6 +26,8 @@ fn main() {
         .build_local(LocalOptions::default())
         .unwrap()
         .block_on(async {
+            CAMERA_INTERFACE.send_to_camera();
+
             task::spawn_local(increment_counter());
 
             topcoat::start(

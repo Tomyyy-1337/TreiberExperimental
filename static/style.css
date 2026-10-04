@@ -1,13 +1,17 @@
 html[data-theme="light"] {
     --background: #fff;
     --section-background: #f0f0f0;
+    --background-2: #f8f8f8;
     --text: #000;
+    --button-color: #1e91ff;
 }
 
 html[data-theme="dark"] {
     --background: #111;
     --section-background: #1a1a1a;
+    --background-2: #1c1c1c;
     --text: #fff;
+    --button-color: #1e91ff;
 }
 
 a, button {
@@ -87,4 +91,147 @@ section {
 }
 .navbar-link.active {
     font-weight: bold;
+}
+
+/**
+ * General settings styles
+ */
+select.settings {
+  background-color: var(--section-background);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5em;
+  padding: 0.5em 2.25em 0.5em 0.75em;
+  box-sizing: border-box;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text) 50%),linear-gradient(135deg, var(--text) 50%, transparent 50%);
+  background-position: calc(100% - 1.15rem) calc(50% - 0.15rem), calc(100% - 0.85rem) calc(50% - 0.15rem);
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+  width: 100%;
+  height: 3em;
+}
+
+/**
+ * Camera panel component styles
+ */
+.camera_settings-panel {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.65rem;
+    color: var(--text);
+    background: var(--background);
+    border: 1px solid var(--text);
+    border-radius: 0.9rem;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.2);
+}
+
+.camera_settings-control-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.camera_settings-toggle-control 
+.camera_settings-control-field {
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--text);
+    background: color-mix(in srgb, var(--section-background) 72%, transparent);
+    border-radius: 0.65rem;
+}
+
+.camera_settings-control-label {
+    color: color-mix(in srgb, var(--text) 62%, transparent);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.camera_settings-toggle-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 3.05rem;
+    gap: 0.4rem;
+    padding: 0.45rem 0.55rem;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    background: var(--background);
+}
+
+
+.camera_settings-toggle-control[active="true"] {
+    background: color-mix(in srgb, var(--section-background) 48%, transparent);
+}
+
+.camera_settings-toggle-control input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.camera_settings-toggle-control input:checked + .switch {
+    background: color-mix(in srgb, var(--button-color) 78%, #1e91ff);
+}
+
+.camera_settings-toggle-control input:checked + .switch::after {
+    background: var(--text);
+    transform: translateX(0.85rem);
+}
+
+.camera_settings-toggle-control input:focus-visible + .switch {
+    outline: 2px solid var(--button-color);
+    outline-offset: 2px;
+}
+
+.camera_settings-toggle-copy {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.camera_settings-toggle-copy small {
+    color: color-mix(in srgb, var(--text) 52%, transparent);
+    font-size: 0.68rem;
+    line-height: 1;
+}
+
+.camera_settings-switch {
+    position: relative;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 1.15rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 18%, var(--background));
+    transition: background-color 160ms ease;
+}
+
+.camera_settings-switch::after {
+    position: absolute;
+    top: 0.18rem;
+    left: 0.18rem;
+    width: 0.79rem;
+    height: 0.79rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--text) 78%, transparent);
+    content: "";
+    transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.camera_settings-toggle-control input:checked + .camera_settings-switch {
+    background: color-mix(in srgb, var(--button-color) 78%, #1e91ff);
+}
+
+.camera_settings-toggle-control input:checked + .camera_settings-switch::after {
+    background: var(--text);
+    transform: translateX(0.85rem);
+}
+
+.camera_settings-toggle-control input:focus-visible + .camera_settings-switch {
+    outline: 2px solid var(--button-color);
+    outline-offset: 2px;
 }

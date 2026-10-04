@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 
 use reqwest::Client;
 use serde::Serialize;
@@ -10,17 +10,17 @@ pub static CAMERA_INTERFACE: Global<CameraInterface> = Global::new(CameraInterfa
     exposure_compenstion: 0.0,
     metering_mode: Metering::Average,
     focus_mode: FocusMode::Fixed,
-    focal_length: 28.0,
+    focal_length: 28,
     bitrate: 3_200_000,
 });
 
-#[derive(Serialize, Debug, Copy, Clone)]
+#[derive(Serialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Metering {
     Center,
     Average,
 }
 
-#[derive(Serialize, Debug, Copy, Clone)]
+#[derive(Serialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum FocusMode {
     Auto,
     Fixed,
@@ -31,7 +31,7 @@ pub struct CameraInterface {
     pub exposure_compenstion: f32,
     pub metering_mode: Metering,
     pub focus_mode: FocusMode,
-    pub focal_length: f32,
+    pub focal_length: u8,
     pub bitrate: u32,
 }
 
@@ -60,7 +60,7 @@ impl CameraInterface {
     fn get_roi(&self) -> String {
         const BASE_FOCAL_LENGTH: f32 = 28.0;
         
-        let crop = BASE_FOCAL_LENGTH / self.focal_length;
+        let crop = BASE_FOCAL_LENGTH / self.focal_length as f32;
         let offset = (1.0 - crop) / 2.0;
 
         format!("{offset:.6},{offset:.6},{crop:.6},{crop:.6}")
@@ -73,8 +73,8 @@ impl CameraInterface {
 struct CameraConfig {
     pub rpiCameraHDR: bool,
     pub rpiCameraEV: f32,
-    pub rpiCameraMetering: &'static str,
-    pub rpiCameraAfMode: &'static str,
+    pub rpiCameraMetering: String,
+    pub rpiCameraAfMode: String,
     pub rpiCameraROI: String,
     pub rpiCameraBitrate: u32,
 }
@@ -84,46 +84,52 @@ impl From<&CameraInterface> for CameraConfig {
         CameraConfig {
             rpiCameraHDR: camera.hdr_enabled,
             rpiCameraEV: camera.exposure_compenstion,
-            rpiCameraMetering: camera.metering_mode.to_name(),
-            rpiCameraAfMode: camera.focus_mode.rpicam_name(),
+            rpiCameraMetering: camera.metering_mode.to_string(),
+            rpiCameraAfMode: camera.focus_mode.to_string(),
             rpiCameraROI: camera.get_roi(),
             rpiCameraBitrate: camera.bitrate,
         }
     }
 }
 
-impl Metering {
-    pub fn to_name(&self) -> &'static str {
+impl ToString for Metering {
+    fn to_string(&self) -> String {
         match self {
-            Metering::Center => "centre",
-            Metering::Average => "matrix",
+            Metering::Center => "centre".to_owned(),
+            Metering::Average => "matrix".to_owned(),
         }
     }
-
-    pub fn from_name(name: &str) -> Self {
-        match name {
-            "centre" => Metering::Center,
-            "matrix" => Metering::Average,
-            _ => unreachable!("Invalid metering mode name"),
-        }
-    }
-
-
 }
 
-impl FocusMode {
-    pub fn rpicam_name(&self) -> &'static str {
-        match self {
-            FocusMode::Auto => "continuous",
-            FocusMode::Fixed => "manual",
+impl FromStr for Metering {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "centre" => Ok(Metering::Center),
+            "matrix" => Ok(Metering::Average),
+            _ => Err(()),
         }
     }
+}
 
-    pub fn from_name(name: &str) -> Self {
-        match name {
-            "continuous" => FocusMode::Auto,
-            "manual" => FocusMode::Fixed,
-            _ => FocusMode::Auto,
+impl ToString for FocusMode {
+    fn to_string(&self) -> String {
+        match self {
+            FocusMode::Auto => "continuous".to_owned(),
+            FocusMode::Fixed => "manual".to_owned(),
+        }
+    }
+}
+
+impl FromStr for FocusMode {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "continuous" => Ok(FocusMode::Auto),
+            "manual" => Ok(FocusMode::Fixed),
+            _ => Err(()),
         }
     }
 }
