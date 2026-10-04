@@ -123,7 +123,7 @@ select.settings {
     padding: 0.65rem;
     color: var(--text);
     background: var(--background);
-    border: 1px solid var(--text);
+    border: 1.5px solid var(--text);
     border-radius: 0.9rem;
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.2);
 }
@@ -134,13 +134,24 @@ select.settings {
     gap: 0.45rem;
 }
 
-.camera_settings-toggle-control 
+.camera_settings-control-block,
+.camera_settings-toggle-control,
 .camera_settings-control-field {
     min-width: 0;
     box-sizing: border-box;
-    border: 1px solid var(--text);
+    border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
     background: color-mix(in srgb, var(--section-background) 72%, transparent);
     border-radius: 0.65rem;
+}
+
+.camera_settings-control-block {
+    margin: 0;
+    padding: 0.5rem 0.6rem 0.45rem;
+}
+
+.camera_settings-exposure-slot {
+    height: 4.9rem;
+    box-sizing: border-box;
 }
 
 .camera_settings-control-label {
@@ -234,4 +245,120 @@ select.settings {
 .camera_settings-toggle-control input:focus-visible + .camera_settings-switch {
     outline: 2px solid var(--button-color);
     outline-offset: 2px;
+}
+
+.camera_settings-rotation-legend,
+.camera_settings-control-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.camera_settings-control-heading {
+    margin-bottom: 0.2rem;
+}
+
+.camera_settings-control-label {
+    color: color-mix(in srgb, var(--text) 62%, transparent);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.camera_settings-control-label,
+.camera_settings-status-note {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+
+.camera_settings-status-note {
+    display: flex;
+    align-items: center;
+    min-height: 4.9rem;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.5rem 0.6rem;
+    color: color-mix(in srgb, var(--text) 58%, transparent);
+    border: 1px dashed var(--camera-line);
+    border-radius: 0.65rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: none;
+}
+
+.camera_settings-slider-wrap {
+    position: relative;
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 1.35rem;
+    margin: 0;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    height: 0.35rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 18%, var(--section-background));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+input[type="range"]::-moz-range-track {
+    height: 0.35rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 18%, var(--section-background));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+input[type="range"]::-moz-range-progress {
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--button-color);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-top: -0.35rem;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 3px solid var(--section-background);
+    border-radius: 50%;
+    background: var(--button-color);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--button-color) 70%, white 30%);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 3px solid var(--section-background);
+    border-radius: 50%;
+    background: var(--button-color);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--button-color) 70%, white 30%);
+}
+
+input[type="range"]:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--button-color) 88%, white 12%);
+    outline-offset: 3px;
+    border-radius: 0.4rem;
+}
+
+:is(select, input):focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+.camera_settings-slider-wrap .slider-legend {
+    display: grid;
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+    height: 1.15rem;
+    color: color-mix(in srgb, var(--text) 56%, transparent);
 }

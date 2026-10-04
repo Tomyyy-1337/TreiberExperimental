@@ -30,6 +30,7 @@ pub async fn settings_camera_component(cx: &Cx) -> Result<impl View> {
                 hdr_settings(hdr_enabled: &hdr_enabled)
                 autolevel_settings()
             </div>
+            exposure_settings(hdr_enabled: &hdr_enabled)
         </div>
     })
 }
@@ -239,6 +240,65 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
     })
 }
 
+#[component]
+async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl View> {
+    let exposure_signal: Signal<String> = signal(cx, || format!("{:.1}", CAMERA_INTERFACE.exposure_compenstion));
+
+    Ok(view! {
+        <div :hidden=$(hdr_enabled.get())>
+            <section class="camera_settings-control-block camera_settings-exposure-slot">
+                <div class="camera_settings-control-heading">
+                    <span class="camera_settings-control-label">"Belichtung"</span>
+                    <output for="camera-exposure-compensation">
+                        $(if exposure_signal.read().starts_with("-") {""} else {"+"})
+                        format_float(signal: &exposure_signal, digits: 1)
+                        " EV"
+                    </output>
+                </div>
+                <div class="camera_settings-slider-wrap">
+                    <input
+                        name="camera-exposure-compensation"
+                        type="range"
+                        min="-3"
+                        max="3"
+                        step="0.5"
+                        value=(exposure_signal.read_untracked())
+                        @input=$(async |event: Event| {
+                            exposure_signal.set(event.target.value);
+                        })
+                        @change=$(async |event: Event| {
+                            set_exposure(event.target.value).await;
+                        })
+                    />
+                </div>
+            </section>
+        </div>
+
+        <div :hidden=$(!hdr_enabled.get())>
+            <p class="camera_settings-exposure-slot camera_settings-status-note">"Belichtung ist bei HDR nicht verfügbar."</p>
+        </div>
+    })
+}
+
+#[procedure]
+pub async fn set_exposure(value: String) -> Result<()> {
+    let value = value.parse::<f32>().unwrap_or(0.0);
+    CAMERA_INTERFACE.modify_and_send(|s| s.exposure_compenstion = value);
+    println!("Exposure compensation set to: {}", value);
+    Ok(())
+}
+
+#[component]
+pub async fn format_float(signal: &Signal<String>, digits: usize) -> Result<impl View> {
+    Ok(view! {
+        $(raw! {
+            "Number(${signal}.get()).toFixed(${digits})",
+            signal.read()
+        })
+    })
+}
+
+
 
 
 // #[component]
@@ -276,20 +336,4 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
 //     })
 // }
 
-// #[component]
-// pub async fn format_float(signal: Signal<String>, digits: usize) -> Result<impl View> {
-//     Ok(view! {
-//         $(raw! {
-//             "Number(${signal}.get()).toFixed(${digits})",
-//             signal.get()
-//         })
-//     })
-// }
 
-// #[procedure]
-// pub async fn set_exposure(value: String) -> Result<()> {
-//     let value = value.parse::<f32>().unwrap_or(0.0);
-//     CAMERA_INTERFACE.modify_and_send(|s| s.exposure_compenstion = value);
-//     println!("Exposure compensation set to: {}", value);
-//     Ok(())
-// }
