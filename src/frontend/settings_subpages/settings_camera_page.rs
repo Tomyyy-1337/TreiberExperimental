@@ -1,4 +1,4 @@
-use topcoat::{Result, context::Cx, router::{Slot, page}, runtime::{Event, procedure, signal, Signal}, view::{View, component, view}};
+use topcoat::{Result, context::Cx, router::{Slot, page}, runtime::{Event, Signal, procedure, shard, signal}, view::{View, component, view}};
 use crate::{backend::camera_interface::CAMERA_INTERFACE, frontend::layouts::back_button_layout::back_button_layout};
 
 #[page("/settings/camera")]
@@ -6,17 +6,27 @@ pub async fn settings_camera() -> Result<impl View> {
     Ok(view! { back_button_layout(slot: Slot::new(view! {
         <h2> "Kamera Einstellungen" </h2>
 
-        hdr_settings()
-        exposure_settings()
+        settings_camera_wrapper()
     }))})
 }
 
 #[component]
-pub async fn exposure_settings(cx: &Cx) -> Result<impl View> {
+pub async fn settings_camera_wrapper(cx: &Cx) -> Result<impl View> {
+    let hdr_enabled: Signal<bool> = signal(cx, || CAMERA_INTERFACE.hdr_enabled);
+    Ok(view! {
+        hdr_settings(hdr_enabled: hdr_enabled.clone())
+        exposure_settings(hdr_enabled: hdr_enabled)
+    })
+}
+
+#[component]
+pub async fn exposure_settings(cx: &Cx, hdr_enabled: Signal<bool>) -> Result<impl View> {
     let exposure_signal: Signal<String> = signal(cx, || format!("{:.1}", CAMERA_INTERFACE.exposure_compenstion));
 
     Ok(view! {
         <h3> "Exposure Compensation" </h3>
+        
+        <div :hidden=$(hdr_enabled.get())> 
         <p> "Current exposure compensation: " $({
             let ev = exposure_signal.get();
             let ev_formated = raw!{
@@ -38,6 +48,10 @@ pub async fn exposure_settings(cx: &Cx) -> Result<impl View> {
                 set_exposure(event.target.value).await;
             })
         />
+        </div>
+        <div :hidden=$(!hdr_enabled.get())> 
+            <p> "HDR is enabled, exposure compensation is not available." </p>
+        </div>
     })
 }   
 
@@ -50,18 +64,16 @@ pub async fn set_exposure(value: String) -> Result<()> {
 }
 
 #[component]
-pub async fn hdr_settings(cx: &Cx) -> Result<impl View> {
-    let hdr_signal: Signal<bool> = signal(cx, || CAMERA_INTERFACE.hdr_enabled);
-
+pub async fn hdr_settings(hdr_enabled: Signal<bool>) -> Result<impl View> {
     Ok(view! {
         <h3> "HDR" </h3>
-        <p> "HDR is " $(if hdr_signal.get() { "enabled" } else { "disabled" }) </p>
+        <p> "HDR is " $(if hdr_enabled.get() { "enabled" } else { "disabled" }) </p>
         <button 
             @click=$(async |_event| { 
                 let new_value = toggle_hdr().await; 
-                hdr_signal.set(new_value);
+                hdr_enabled.set(new_value);
             })>
-            $(if hdr_signal.get() { "Disable HDR" } else { "Enable HDR" })
+            $(if hdr_enabled.get() { "Disable HDR" } else { "Enable HDR" })
         </button>
     })
 }
