@@ -84,8 +84,8 @@ impl From<&CameraInterface> for CameraConfig {
         CameraConfig {
             rpiCameraHDR: camera.hdr_enabled,
             rpiCameraEV: camera.exposure_compenstion,
-            rpiCameraMetering: camera.metering_mode.name(),
-            rpiCameraAfMode: camera.focus_mode.name(),
+            rpiCameraMetering: camera.metering_mode.to_name(),
+            rpiCameraAfMode: camera.focus_mode.rpicam_name(),
             rpiCameraROI: camera.get_roi(),
             rpiCameraBitrate: camera.bitrate,
         }
@@ -93,19 +93,37 @@ impl From<&CameraInterface> for CameraConfig {
 }
 
 impl Metering {
-    fn name(&self) -> &'static str {
+    pub fn to_name(&self) -> &'static str {
         match self {
             Metering::Center => "centre",
             Metering::Average => "matrix",
         }
     }
+
+    pub fn from_name(name: &str) -> Self {
+        match name {
+            "centre" => Metering::Center,
+            "matrix" => Metering::Average,
+            _ => unreachable!("Invalid metering mode name"),
+        }
+    }
+
+
 }
 
 impl FocusMode {
-    fn name(&self) -> &'static str {
+    pub fn rpicam_name(&self) -> &'static str {
         match self {
             FocusMode::Auto => "continuous",
             FocusMode::Fixed => "manual",
+        }
+    }
+
+    pub fn from_name(name: &str) -> Self {
+        match name {
+            "continuous" => FocusMode::Auto,
+            "manual" => FocusMode::Fixed,
+            _ => FocusMode::Auto,
         }
     }
 }
