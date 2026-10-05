@@ -2,11 +2,10 @@ use topcoat::{Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cook
 
 use crate::{SHARED_STATE, frontend::{icons::battery_status::battery_status, layouts::nav_layout::nav_layout}};
 
-pub const MEDIAMTX_READER: Asset = asset!("../../static/mediamtx-reader.js");
 const MEDIAMTX_WEBRTC_URL: &str = "http://localhost:8889/camera/whep";
 
 #[page("/")]
-async fn camera() -> Result<impl View> {
+pub async fn camera_page() -> Result<impl View> {
     Ok(view! { nav_layout(slot: Slot::new(view! {
         stream_player()
 
@@ -28,8 +27,6 @@ pub async fn stream_player() -> Result<impl View> {
                 <video data-live-video="" autoplay="" playsinline="" muted=""></video>
             </div>
         </section>
-
-        <script type="module" src=(MEDIAMTX_READER)></script>
     })
 }
 

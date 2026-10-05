@@ -1,17 +1,23 @@
-use topcoat::{Result, router::{Slot, page}, view::{Child, View, component, view}};
+use topcoat::{Result, router::{Slot, href, page}, runtime::link, view::{Child, View, component, view}};
 
-use crate::frontend::layouts::nav_layout::nav_layout;
+use crate::frontend::{layouts::nav_layout::nav_layout, settings_subpages::{settings_anzeige_page::settings_anzeige_page, settings_camera_page::settings_camera_page}};
 
 #[page("/settings")]
-pub async fn settings() -> Result<impl View> {
+pub async fn settings_page() -> Result<impl View> {
     Ok(view! { nav_layout(slot: Slot::new(view! { 
         <h2> "Settings Page" </h2>
         
         settings_wrapper (
-            <a href="/settings/camera"> "Kamera Einstellungen" </a>
+            link(
+                href: href!(settings_camera_page), 
+                "Kamera Einstellungen"
+            )
         )
         settings_wrapper (
-            <a href="/settings/anzeige"> "Anzeige Einstellungen" </a>
+            link(
+                href: href!(settings_anzeige_page), 
+                "Anzeige Einstellungen"
+            )
         )
     }))})
 }

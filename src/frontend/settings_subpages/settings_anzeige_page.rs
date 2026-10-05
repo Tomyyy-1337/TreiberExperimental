@@ -3,7 +3,7 @@ use topcoat::{Result, context::Cx, cookie::{Cookies, cookies}, router::{Slot, pa
 use crate::{frontend::{layouts::back_button_layout::back_button_layout}};
 
 #[page("/settings/anzeige")]
-pub async fn settings_anzeige() -> Result<impl View> {
+pub async fn settings_anzeige_page() -> Result<impl View> {
     Ok(view! { back_button_layout(slot: Slot::new(view! {
         <h2> "Anzeige Einstellungen" </h2>
 

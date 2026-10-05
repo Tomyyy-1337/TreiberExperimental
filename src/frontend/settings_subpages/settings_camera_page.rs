@@ -4,7 +4,7 @@ use topcoat::{Result, context::{Cx, app_context}, router::{Slot, page}, runtime:
 use crate::{backend::camera_interface::{self, CAMERA_INTERFACE, CameraInterface, FocusMode, Metering}, frontend::layouts::back_button_layout::back_button_layout};
 
 #[page("/settings/camera")]
-async fn settings_camera() -> Result<impl View> {
+pub async fn settings_camera_page() -> Result<impl View> {
     Ok(view! {back_button_layout(slot: Slot::new(
         view! {
             <h2>"Kamera Einstellungen"</h2>
@@ -280,7 +280,7 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
     })
 }
 
-#[procedure]
+#[procedure("/api/set_exposure")]
 pub async fn set_exposure(value: String) -> Result<()> {
     let value = value.parse::<f32>().unwrap_or(0.0);
     CAMERA_INTERFACE.modify_and_send(|s| s.exposure_compenstion = value);

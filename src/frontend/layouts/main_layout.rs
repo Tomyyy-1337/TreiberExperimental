@@ -2,6 +2,7 @@ use topcoat::{Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cook
 
 pub const STYLESHEET: Asset = asset!("../../../static/style.css");
 pub const SCRIPT: Asset = asset!("../../../static/script.js");
+pub const MEDIAMTX_READER: Asset = asset!("../../../static/mediamtx-reader.js");
 
 #[layout("/")]
 pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
@@ -16,6 +17,7 @@ pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
             // topcoat::dev::script()
             <link rel="stylesheet" type="text/css" href=(STYLESHEET)>
             <script type="module" src=(SCRIPT)></script>
+            <script type="module" src=(MEDIAMTX_READER)></script>
         </head>
         <html data-theme=(theme_cookie.as_ref().map(|c| c.value()).unwrap_or("light"))>
             <body>
