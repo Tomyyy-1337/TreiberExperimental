@@ -1,4 +1,4 @@
-use std::{cell::UnsafeCell, ops::{Deref, DerefMut}};
+use std::{cell::UnsafeCell, ops::Deref};
 
 pub struct Global<T>(UnsafeCell<T>);
 

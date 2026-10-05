@@ -1,13 +1,13 @@
 use std::str::FromStr;
 
-use topcoat::{Result, context::{Cx, app_context}, router::{Slot, page}, runtime::{Event, Signal, procedure, signal}, view::{Attribute, Attributes, Child, View, attributes, class, component, view}};
-use crate::{backend::camera_interface::{self, CAMERA_INTERFACE, CameraInterface, FocusMode, Metering}, frontend::layouts::back_button_layout::back_button_layout};
+use topcoat::{Result, context::Cx, router::{Slot, page}, runtime::{Event, Signal, procedure, signal}, view::{Attributes, View, attributes, component, view}};
+use crate::{backend::camera_interface::{CAMERA_INTERFACE, FocusMode, Metering}, frontend::layouts::back_button_layout::back_button_layout};
 
 #[page("/settings/camera")]
 pub async fn settings_camera_page() -> Result<impl View> {
     Ok(view! {back_button_layout(slot: Slot::new(
         view! {
-            <h2>"Kamera Einstellungen"</h2>
+            <h2 class="mb-4 text-xl font-semibold tracking-tight">"Kamera Einstellungen"</h2>
 
             // settings_camera_wrapper()
 
@@ -21,8 +21,8 @@ pub async fn settings_camera_component(cx: &Cx) -> Result<impl View> {
     let hdr_enabled: Signal<bool> = signal(cx, || CAMERA_INTERFACE.hdr_enabled);
 
     Ok(view! {
-        <div class="camera_settings-panel">
-            <div class="camera_settings-control-grid">
+        <div class="grid gap-2 rounded-xl border border-border bg-card p-3 text-card-foreground shadow-sm">
+            <div class="grid grid-cols-2 gap-2">
                 focal_length()
                 metering_mode_settings()
                 focus_mode_settings()
@@ -43,9 +43,9 @@ async fn select_widget<T: ToString + Send + Sync + PartialEq + 'static>(
     on_select: Attributes
 ) -> Result<impl View> {
     Ok(view! {
-        <label class="camera_settings-control-field">
-            <span class="camera_settings-control-label"> (title) </span>
-            <select (on_select) class="settings">
+        <label class="min-w-0 rounded-lg border border-border bg-background p-1.5">
+            <span class="mb-1 block text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground"> (title) </span>
+            <select (on_select) class="mt-0.5 h-9 w-full cursor-pointer rounded-md border border-border bg-card px-2 text-sm text-card-foreground outline-none">
                 for (value, label) in possible_values.iter() {
                     let attributes = attributes! {
                         value=(value.to_string())
@@ -191,12 +191,13 @@ async fn set_bitrate(value: String) -> Result<()> {
 #[component]
 async fn hdr_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl View> {
     Ok(view! {
-        <label :active=$(hdr_enabled.get()) class="inactive camera_settings-toggle-control">
-            <span class="camera_settings-toggle-copy">
-                <span class="control-label">"HDR"</span>
-                <small>$(if hdr_enabled.get() {"Aktiv"} else {"Aus"})</small>
+        <label class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-background px-2 py-2">
+            <span class="grid min-w-0 gap-1">
+                <span class="text-sm font-medium">"HDR"</span>
+                <small class="text-[0.68rem] leading-none text-muted-foreground">$(if hdr_enabled.get() {"Aktiv"} else {"Aus"})</small>
             </span>
             <input
+                class="peer sr-only"
                 name="camera-hdr"
                 type="checkbox"
                 checked=(hdr_enabled.get_untracked())
@@ -205,7 +206,7 @@ async fn hdr_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl View> 
                     hdr_enabled.set(new_hdr_enabled);
                 })
             />
-            <span class="camera_settings-switch" aria-hidden="true"></span>
+            <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-ring" aria-hidden="true"></span>
         </label> 
     })
 }
@@ -222,12 +223,13 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
     let auto_level_enabled: Signal<bool> = signal(cx, || false);
 
     Ok(view! {
-        <label :active=$(auto_level_enabled.get()) class="camera_settings-toggle-control">
-            <span class="camera_settings-toggle-copy">
-                <span class="control-label">"Auto Level"</span>
-                <small>$(if auto_level_enabled.get() {"Aktiv"} else {"Aus"})</small>
+        <label class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-background px-2 py-2">
+            <span class="grid min-w-0 gap-1">
+                <span class="text-sm font-medium">"Auto Level"</span>
+                <small class="text-[0.68rem] leading-none text-muted-foreground">$(if auto_level_enabled.get() {"Aktiv"} else {"Aus"})</small>
             </span>
             <input 
+                class="peer sr-only"
                 name="camera-auto-level"
                 type="checkbox"
                 checked=(auto_level_enabled.get_untracked())
@@ -235,7 +237,7 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
                     auto_level_enabled.set(!auto_level_enabled.get());
                 })
             />  
-            <span class="camera_settings-switch" aria-hidden="true"></span>
+            <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-ring" aria-hidden="true"></span>
         </label>
     })
 }
@@ -246,18 +248,19 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
 
     Ok(view! {
         <div :hidden=$(hdr_enabled.get())>
-            <section class="camera_settings-control-block camera_settings-exposure-slot">
-                <div class="camera_settings-control-heading">
-                    <span class="camera_settings-control-label">"Belichtung"</span>
+            <section class="my-0 grid h-[4.9rem] content-start gap-2 rounded-lg border border-border bg-background p-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">"Belichtung"</span>
                     <output for="camera-exposure-compensation">
                         $(if exposure_signal.read().starts_with("-") {""} else {"+"})
                         format_float(signal: &exposure_signal, digits: 1)
                         " EV"
                     </output>
                 </div>
-                <div class="camera_settings-slider-wrap">
+                <div class="relative">
                     <input
                         name="camera-exposure-compensation"
+                        class="h-6 w-full cursor-pointer accent-primary"
                         type="range"
                         min="-3"
                         max="3"
@@ -275,7 +278,7 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
         </div>
 
         <div :hidden=$(!hdr_enabled.get())>
-            <p class="camera_settings-exposure-slot camera_settings-status-note">"Belichtung ist bei HDR nicht verfügbar."</p>
+            <p class="my-0 flex min-h-[4.9rem] items-center rounded-lg border border-dashed border-border px-2 text-[0.6rem] tracking-[0.06em] text-muted-foreground">"Belichtung ist bei HDR nicht verfügbar."</p>
         </div>
     })
 }
@@ -297,43 +300,3 @@ pub async fn format_float(signal: &Signal<String>, digits: usize) -> Result<impl
         })
     })
 }
-
-
-
-
-// #[component]
-// pub async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl View> {
-//     let exposure_signal: Signal<String> = signal(cx, || format!("{:.1}", CAMERA_INTERFACE.exposure_compenstion));
-    
-//     let input_attributes = attributes! {
-//         type="range"
-//         min=(-3.0)
-//         max=(3.0)
-//         step=(0.5)
-//         value=(exposure_signal.get_untracked())
-//         @input=$(async |event: Event| {
-//             exposure_signal.set(event.target.value);
-//         })
-//         @change=$(async |event: Event| {
-//             set_exposure(event.target.value).await;
-//         })
-//     };
-    
-//     Ok(view! {
-//         <h3>"Exposure Compensation"</h3>
-
-//         <div :hidden=$(hdr_enabled.get())>
-//             <p>
-//                 "Current exposure compensation: "
-//                 format_float(signal: exposure_signal, digits: 1)
-//             </p>
-//             <input (input_attributes) />
-//         </div>
-
-//         <div :hidden=$(!hdr_enabled.get())>
-//             <p>"HDR is enabled, exposure compensation is not available."</p>
-//         </div>
-//     })
-// }
-
-

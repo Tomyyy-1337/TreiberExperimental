@@ -1,14 +1,16 @@
 use topcoat::{Result, context::Cx, cookie::{Cookies, cookies}, router::{Slot, page}, runtime::signal, view::{View, component, view}};
 
-use crate::{frontend::{layouts::back_button_layout::back_button_layout}};
+use crate::frontend::layouts::{back_button_layout::back_button_layout};
 
 #[page("/settings/anzeige")]
 pub async fn settings_anzeige_page() -> Result<impl View> {
-    Ok(view! { back_button_layout(slot: Slot::new(view! {
-        <h2> "Anzeige Einstellungen" </h2>
+    Ok(view! { back_button_layout(slot: Slot::new(
+        view! {
+            <h2> "Anzeige Einstellungen" </h2>
 
-        theme_settings()
-    }))})
+            theme_settings()
+        }
+    ))})
 }
 
 #[component]
@@ -31,7 +33,7 @@ pub async fn theme_settings(cx: &Cx) -> Result<impl View> {
 
             // Change the theme in the browser and set the cookie accordingly
             raw!("
-                document.documentElement.setAttribute('data-theme', ${new_theme}.toString());
+                document.documentElement.className = ${new_theme};
                 document.cookie = 'theme=' + ${new_theme}.toString() + '; path=/; expires=' + new Date(Date.now() + 356 * 24 * 60 * 60 * 1000).toUTCString();                
             ");
         })>
