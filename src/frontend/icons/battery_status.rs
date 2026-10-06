@@ -9,12 +9,12 @@ pub async fn battery_status(cx: &Cx) -> Result<impl View> {
             let mut timer = tokio::time::interval(std::time::Duration::from_secs(5));
 
             loop {
-                    let battery_color = match SHARED_STATE.battery_percentage {
-                        0..=14 => "text-red-500",
-                        15..=30 => "text-orange-500",
-                        31..=50 => "text-yellow-500",
-                        _ => "text-green-500",
-                    };
+                let battery_color = match SHARED_STATE.battery_percentage {
+                    0..=14 => "text-red-500",
+                    15..=30 => "text-orange-500",
+                    31..=50 => "text-yellow-500",
+                    _ => "text-green-500",
+                };
 
                 let token = emit! {
                     <div class=(format!("flex items-center gap-1 {}", battery_color))>

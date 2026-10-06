@@ -1,4 +1,4 @@
-use topcoat::{Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cookies}, router::{Slot, layout}, view::{View, view}};
+use topcoat::{Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cookies}, router::{Slot, layout}, runtime::{Signal, signal}, view::{View, view}};
 
 pub const SCRIPT: Asset = asset!("../../../static/script.js");
 
@@ -19,7 +19,7 @@ pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
             topcoat::runtime::script()
             <script type="module" src=(SCRIPT)></script>
         </head>
-        <html class=(theme_cookie.as_ref().map(|c| c.value()).unwrap_or("dark"))>
+        <html class=(theme_cookie.as_ref().map(|c| c.value()).unwrap_or(""))>
             <body class="min-h-screen bg-background text-foreground antialiased">
                 (slot)
             </body>

@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 topcoat = { version = "0.10.0", features = ["asset", "fs", "runtime", "websocket", "asset", "compression", "tailwind", "font-fontsource"] }
 tokio = { version = "1.53.2", features = ["full"] }
-chrono = "0.4.45"
 serde = { version = "1.0", features = ["derive"] }
 reqwest = { version = "0.13.5", features = ["json"], default-features = false }
 

@@ -3,7 +3,7 @@ mod frontend;
 mod backend;
 
 use tokio::{runtime::LocalOptions, task};
-use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
+use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, OriginPolicy, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
 
 use crate::{backend::camera_interface::CAMERA_INTERFACE, global::Global}; 
 
@@ -37,7 +37,8 @@ fn main() {
                     .assets(AssetBundle::load().unwrap())
                     .compression(Compression::new().brotli(false).level(CompressionLevel::Balanced))
                     .runtime()
-                    .prefetch(PrefetchMode::Intent)
+                    .prefetch(PrefetchMode::Never)
+                    // .origin_policy(OriginPolicy::dangerous_disable())
                     .build()
                 )
                 .await

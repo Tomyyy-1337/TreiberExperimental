@@ -45,7 +45,11 @@ async fn select_widget<T: ToString + Send + Sync + PartialEq + 'static>(
     Ok(view! {
         <label class="min-w-0 rounded-lg border border-border bg-background p-1.5">
             <span class="mb-1 block text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground"> (title) </span>
-            <select (on_select) class="mt-0.5 h-9 w-full cursor-pointer rounded-md border border-border bg-card px-2 text-sm text-card-foreground outline-none">
+            <select 
+                (on_select) 
+                name=(format!("{}_select", title.split_whitespace().map(|s| s.to_lowercase()).collect::<Vec<_>>().join("_"))) 
+                class="select-arrow mt-0.5 h-9 w-full cursor-pointer rounded-md border border-border bg-card px-2 pr-8 text-sm text-card-foreground outline-none"
+            >
                 for (value, label) in possible_values.iter() {
                     let attributes = attributes! {
                         value=(value.to_string())

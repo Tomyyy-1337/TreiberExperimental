@@ -44,6 +44,19 @@
    typically <html>. */
 @custom-variant dark (&:is(.dark *));
 
+
+/* Custom Classes */
+.select-arrow {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 50%, calc(100% - 8px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px, 4px 4px;
+  padding-right: 2rem;
+}
+
 /* Expose the tokens as Tailwind utilities (`bg-background`, `text-primary`,
    `border-border`, ...). The indirection through plain variables on `:root`
    and `.dark` is what lets the values swap when the color scheme changes. */
