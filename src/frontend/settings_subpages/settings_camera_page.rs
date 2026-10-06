@@ -1,19 +1,18 @@
 use std::str::FromStr;
 
 use topcoat::{Result, context::Cx, router::{Slot, page}, runtime::{Event, Signal, procedure, signal}, view::{Attributes, View, attributes, component, view}};
-use crate::{backend::camera_interface::{CAMERA_INTERFACE, FocusMode, Metering}, frontend::layouts::back_button_layout::back_button_layout};
+use crate::{backend::camera_interface::{CAMERA_INTERFACE, FocusMode, Metering}, frontend::settings_subpages::settings_wrapper::settings_wrapper};
 
 #[page("/settings/camera")]
 pub async fn settings_camera_page() -> Result<impl View> {
-    Ok(view! {back_button_layout(slot: Slot::new(
-        view! {
-            <h2 class="mb-4 text-xl font-semibold tracking-tight">"Kamera Einstellungen"</h2>
-
-            // settings_camera_wrapper()
+    Ok(view! {
+        settings_wrapper(
+            title: "Kamera Einstellungen",
+            description: "Einstellungen für die Kamera",
 
             settings_camera_component()
-        },
-    ))})
+        )
+    })
 }
 
 #[component]
@@ -193,7 +192,7 @@ async fn set_bitrate(value: String) -> Result<()> {
 }
 
 #[component]
-async fn hdr_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl View> {
+async fn hdr_settings(hdr_enabled: &Signal<bool>) -> Result<impl View> {
     Ok(view! {
         <label class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-background px-2 py-2">
             <span class="grid min-w-0 gap-1">

@@ -44,6 +44,15 @@
    typically <html>. */
 @custom-variant dark (&:is(.dark *));
 
+html,
+body {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
 
 /* Custom Classes */
 .select-arrow {
