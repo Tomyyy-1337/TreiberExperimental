@@ -40,9 +40,9 @@ fn main() {
                     .prefetch(PrefetchMode::Never)
                     // .origin_policy(OriginPolicy::dangerous_disable())
                     .build()
-                )
-                .await
-                .unwrap();
+            )
+            .await
+            .unwrap();
         });
 }
 

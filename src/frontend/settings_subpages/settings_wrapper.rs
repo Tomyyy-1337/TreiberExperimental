@@ -9,7 +9,7 @@ pub async fn settings_wrapper(
     child: Child<'_>
 ) -> Result<impl View> {
     Ok(view! {
-        <div class="grid gap-6 px-4 py-6">
+        <div class="mx-auto grid w-full max-w-4xl gap-6 px-4 py-6">
             <div class="flex items-start justify-between gap-4">
                 <header class="grid gap-1">
                     <h1 class="text-2xl font-semibold tracking-tight text-foreground"> (title) </h1>
@@ -32,5 +32,27 @@ pub async fn settings_wrapper(
                 (child)
             </div>
         </div>
+    })
+}
+
+#[component]
+pub async fn settings_container(
+    title: &str,
+    #[default] description: &str,
+    child: Child<'_>
+) -> Result<impl View> {
+    Ok(view! {
+        <article class="grid gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+            <div class="grid gap-1">
+                <h3 class="text-base font-semibold"> (title) </h3>
+                if description != "" {
+                    <p class="text-sm text-muted-foreground"> (description) </p>
+                }
+            </div>
+            <div class="border-t border-border" aria-hidden="true"></div>
+            <div class="grid gap-1.5">
+                (child)
+            </div>
+        </article>
     })
 }

@@ -1,6 +1,6 @@
 use topcoat::{Result, context::Cx, cookie::{Cookies, cookies}, router::page, runtime::{Event, signal}, view::{Attributes, Child, View, attributes, component, view}};
 
-use crate::frontend::settings_subpages::settings_wrapper::settings_wrapper;
+use crate::frontend::settings_subpages::settings_wrapper::{settings_container, settings_wrapper};
 
 #[page("/settings/anzeige")]
 pub async fn settings_anzeige_page() -> Result<impl View> {
@@ -16,28 +16,6 @@ pub async fn settings_anzeige_page() -> Result<impl View> {
 }
 
 #[component]
-async fn settings_container(
-    title: &str,
-    #[default] description: &str,
-    child: Child<'_>
-) -> Result<impl View> {
-    Ok(view! {
-        <article class="grid gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm">
-            <div class="grid gap-1">
-                <h3 class="text-base font-semibold"> (title) </h3>
-                if description != "" {
-                    <p class="text-sm text-muted-foreground"> (description) </p>
-                }
-            </div>
-            <div class="border-t border-border" aria-hidden="true"></div>
-            <div class="grid gap-1.5">
-                (child)
-            </div>
-        </article>
-    })
-}
-
-#[component]
 async fn select_widget(
     title: &str,
     possible_values: &[(&str, &str)],
@@ -45,7 +23,7 @@ async fn select_widget(
     on_select: Attributes,
 ) -> Result<impl View> {
     Ok(view! {
-        <label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"> (title) 
+        <label class="flex flex-col gap-2 text-sm font-semibold tracking-wide text-foreground"> (title) 
             <select 
                 (on_select) 
                 name=(format!("{}_select", title.split_whitespace().map(|s| s.to_lowercase()).collect::<Vec<_>>().join("_"))) 
@@ -151,16 +129,18 @@ async fn overlay_settings(cx: &Cx) -> Result<impl View> {
                     },
                 )
 
-                <h4 class="pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                    "Eingeblendete Daten im Overlay"
-                </h4>
-                <div class="flex flex-col gap-1">
+                <div class="grid gap-2">
+                    <h4 class="pt-2 pb-1 text-sm font-semibold tracking-wide text-foreground">
+                        "Eingeblendete Daten im Overlay"
+                    </h4>
+                    <div class="flex flex-col gap-1">
                     for element in OVERLAY_ELEMENTS.iter() {
                         overlay_element_toggle(
                             label: element.label,
                             cookie_name: element.cookie_name
                         )
                     }
+                    </div>
                 </div>
             </div>
 

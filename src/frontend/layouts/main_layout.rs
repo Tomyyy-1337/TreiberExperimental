@@ -15,7 +15,6 @@ pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
             
             <link rel="stylesheet" href=(topcoat::tailwind::stylesheet!())>
 
-            // topcoat::dev::script()
             topcoat::runtime::script()
             <script type="module" src=(SCRIPT)></script>
         </head>
