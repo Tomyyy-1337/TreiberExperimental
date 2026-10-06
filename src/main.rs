@@ -7,15 +7,23 @@ use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilder
 
 use crate::{backend::camera_interface::CAMERA_INTERFACE, global::Global}; 
 
-struct SharedState {
-    counter: u64,
+struct BatteryState {
     battery_percentage: u8,
 }
 
-static SHARED_STATE: Global<SharedState> = Global::new(
-    SharedState {
-        counter: 0,
+static BATTERY_STATE: Global<BatteryState> = Global::new(
+    BatteryState {
         battery_percentage: 0,
+    }
+);
+
+struct GpsState {
+    satellite_count: u8,
+}
+
+static GPS_STATE: Global<GpsState> = Global::new(
+    GpsState {
+        satellite_count: 0,
     }
 );
 
@@ -48,9 +56,11 @@ fn main() {
 
 async fn increment_counter() {
     loop {
-        SHARED_STATE.modify(|state| {
-            state.counter += 1;
-            state.battery_percentage = (state.battery_percentage + 2) % 101;
+        BATTERY_STATE.modify(|state| {
+            state.battery_percentage = (state.battery_percentage + 1) % 101;
+        });
+        GPS_STATE.modify(|state| {
+            state.satellite_count = (state.satellite_count + 1) % 13;
         });
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }

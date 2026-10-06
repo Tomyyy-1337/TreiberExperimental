@@ -1,6 +1,6 @@
 use topcoat::{Result, router::href, runtime::link, view::{Child, View, attributes, component, view}};
 
-use crate::frontend::settings_page::settings_page;
+use crate::frontend::pages::settings_page::settings_page;
 
 #[component]
 pub async fn settings_wrapper(
@@ -20,7 +20,7 @@ pub async fn settings_wrapper(
                 link(
                     href: href!(settings_page),
                     attrs: attributes!{
-                        class= "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-background text-3xl font-medium leading-none text-muted-foreground"
+                        class= "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-card text-3xl font-medium leading-none text-muted-foreground"
                         aria-label= "Zurück zu den Einstellungen"
                         title= "Zurück"
                     }

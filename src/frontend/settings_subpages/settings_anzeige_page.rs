@@ -27,7 +27,7 @@ async fn select_widget(
             <select 
                 (on_select) 
                 name=(format!("{}_select", title.split_whitespace().map(|s| s.to_lowercase()).collect::<Vec<_>>().join("_"))) 
-                class="select-arrow h-10 w-full cursor-pointer rounded-md border border-border bg-background px-3 pr-8 text-sm text-foreground outline-none"
+                class="select-arrow h-10 w-full cursor-pointer rounded-md border border-border bg-card px-3 pr-8 text-sm text-foreground outline-none"
             >
                 for (value, label) in possible_values {
                     <option value=(value) selected=(selected == *value)> (label) </option>
@@ -42,7 +42,7 @@ async fn theme_settings(cx: &Cx) -> Result<impl View> {
     let theme_cookies = cookies(cx);
     let current_theme = theme_cookies.get("theme").map(|c| c.value().to_string()).unwrap_or_else(|| "dark".to_string());
 
-    let theme_options = [
+    const THEME_OPTIONS: [(&str, &str); 2] = [
         ("light", "Light"),
         ("dark", "Dark"),
     ];
@@ -53,7 +53,7 @@ async fn theme_settings(cx: &Cx) -> Result<impl View> {
 
             select_widget(
                 title: "Theme Toggle",
-                possible_values: &theme_options,
+                possible_values: &THEME_OPTIONS,
                 selected: current_theme,
                 on_select: attributes! {
                     @change=$(async |event: Event| {
@@ -163,7 +163,7 @@ async fn overlay_element_toggle(
     let cookie_value = cookie.map(|c| c.value() == "true").unwrap_or(true);
 
     Ok(view! {
-        <label class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-lg border-2 border-border bg-background px-2 py-2 text-foreground has-[:checked]:border-primary">
+        <label class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-lg border-2 border-border bg-card px-2 py-2 text-foreground has-[:checked]:border-primary">
             <span class="text-sm font-medium">(label)</span>
             <input
                 class="peer sr-only"

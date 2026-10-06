@@ -25,7 +25,7 @@ pub async fn settings_page() -> Result<impl View> {
 }
 
 #[component]
-pub async fn settings_wrapper(#[default] child: Child<'_>) -> Result<impl View> {
+async fn settings_wrapper(#[default] child: Child<'_>) -> Result<impl View> {
     Ok(view! {
         <div class="p-2.5">
             (child)
