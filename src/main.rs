@@ -46,7 +46,7 @@ fn main() {
         .unwrap()
         .block_on(async {
             // Initialize Camera Interface
-            CAMERA_INTERFACE.send_to_camera();
+            tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
             
             // Spawn backend Tasks
             task::spawn_local(increment_counter());

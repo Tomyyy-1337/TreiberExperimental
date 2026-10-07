@@ -1,4 +1,4 @@
-use std::{str::FromStr, time::Duration};
+use std::{ops::Deref, str::FromStr, time::Duration};
 
 use reqwest::Client;
 use serde::Serialize;
@@ -12,6 +12,7 @@ pub static CAMERA_INTERFACE: Global<CameraInterface> = Global::new(CameraInterfa
     focus_mode: FocusMode::Fixed,
     focal_length: 28,
     bitrate: 3_200_000,
+    client: None
 });
 
 #[derive(Serialize, Debug, Copy, Clone, PartialEq, Eq)]
@@ -33,6 +34,7 @@ pub struct CameraInterface {
     pub focus_mode: FocusMode,
     pub focal_length: u8,
     pub bitrate: u32,
+    client: Option<Client>,
 }
 
 impl Global<CameraInterface> {
@@ -42,24 +44,30 @@ impl Global<CameraInterface> {
     {
         self.modify(|s| f(s));
         
-        self.send_to_camera();
+        tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
+    }
+}
+
+impl Global<CameraInterface> {
+    pub async fn send_to_camera(&self) {
+        let client = match &self.client {
+            Some(c) => c,
+            None => {
+                let client = Client::builder().build().unwrap();
+                self.modify(|s| s.client = Some(client));
+                self.client.as_ref().unwrap()
+            }
+        };
+
+        let config = CameraConfig::from(self.deref());
+
+        if let Err(_e) = internal_update_camera_config(&client, &config).await {
+            println!("Camera can not be updated");
+        }
     }
 }
 
 impl CameraInterface {
-    pub fn send_to_camera(&self) {
-        let config = CameraConfig::from(self);
-        
-        tokio::task::spawn_local(async move { 
-            let client = Client::builder().build().unwrap();
-            
-            let err = internal_update_camera_config(&client, &config).await;
-            if let Err(_e) = err {
-                println!("Camera can not be updated");
-            }
-        });
-    }
-
     fn get_roi(&self) -> String {
         const BASE_FOCAL_LENGTH: f32 = 28.0;
         
