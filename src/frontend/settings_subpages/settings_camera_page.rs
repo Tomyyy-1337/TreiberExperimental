@@ -88,7 +88,7 @@ async fn focal_length() -> Result<impl View> {
 #[procedure("/api/set_focal_length")]
 async fn set_focal_length(value: String) -> Result<()> {
     let value = value.parse::<u8>().unwrap_or(0);
-    CAMERA_INTERFACE.modify_and_send(|s| s.focal_length = value).await;
+    CAMERA_INTERFACE.modify_and_send(|s| s.focal_length = value);
     println!("Focal length set to: {}", CAMERA_INTERFACE.focal_length);
     Ok(())
 }
@@ -120,7 +120,7 @@ async fn metering_mode_settings() -> Result<impl View> {
 #[procedure("/api/set_metering_mode")]
 async fn set_metering_mode(value: String) -> Result<()> {
     let metering_mode = Metering::from_str(&value).unwrap_or(Metering::Average);
-    CAMERA_INTERFACE.modify_and_send(|s| s.metering_mode = metering_mode).await;
+    CAMERA_INTERFACE.modify_and_send(|s| s.metering_mode = metering_mode);
     println!("Metering mode set to: {}", CAMERA_INTERFACE.metering_mode.to_string());
     Ok(())
 }
@@ -151,7 +151,7 @@ async fn focus_mode_settings() -> Result<impl View> {
 #[procedure("/api/set_focus_mode")]
 async fn set_focus_mode(value: String) -> Result<()> {
     let focus_mode = FocusMode::from_str(&value).unwrap_or(FocusMode::Fixed);
-    CAMERA_INTERFACE.modify_and_send(|s| s.focus_mode = focus_mode).await;
+    CAMERA_INTERFACE.modify_and_send(|s| s.focus_mode = focus_mode);
     println!("Focus mode set to: {}", CAMERA_INTERFACE.focus_mode.to_string());
     Ok(())
 }
@@ -186,7 +186,7 @@ async fn bitrate_settings() -> Result<impl View> {
 #[procedure("/api/set_bitrate")]
 async fn set_bitrate(value: String) -> Result<()> {
     let bitrate = value.parse::<u32>().unwrap_or(3200000);
-    CAMERA_INTERFACE.modify_and_send(|s| s.bitrate = bitrate).await;
+    CAMERA_INTERFACE.modify_and_send(|s| s.bitrate = bitrate);
     println!("Bitrate set to: {}", CAMERA_INTERFACE.bitrate);
     Ok(())
 }
@@ -216,7 +216,7 @@ async fn hdr_settings(hdr_enabled: &Signal<bool>) -> Result<impl View> {
 
 #[procedure("/api/toggle_hdr")]
 async fn toggle_hdr() -> Result<bool> {
-    CAMERA_INTERFACE.modify_and_send(|camera_interface| camera_interface.hdr_enabled = !camera_interface.hdr_enabled).await;
+    CAMERA_INTERFACE.modify_and_send(|camera_interface| camera_interface.hdr_enabled = !camera_interface.hdr_enabled);
     println!("HDR set to: {}", CAMERA_INTERFACE.hdr_enabled);
     Ok(CAMERA_INTERFACE.hdr_enabled)
 }
@@ -300,7 +300,7 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
 #[procedure("/api/set_exposure")]
 pub async fn set_exposure(value: String) -> Result<()> {
     let value = value.parse::<f32>().unwrap_or(0.0);
-    CAMERA_INTERFACE.modify_and_send(|s| s.exposure_compenstion = value).await;
+    CAMERA_INTERFACE.modify_and_send(|s| s.exposure_compenstion = value);
     println!("Exposure compensation set to: {}", value);
     Ok(())
 }

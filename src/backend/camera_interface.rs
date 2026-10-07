@@ -36,7 +36,7 @@ pub struct CameraInterface {
 }
 
 impl Global<CameraInterface> {
-    pub async fn modify_and_send<F>(&self, f: F)
+    pub fn modify_and_send<F>(&self, f: F)
     where
         F: FnOnce(&mut CameraInterface),
     {
