@@ -59,7 +59,7 @@ impl Global<CameraInterface> {
             }
         };
 
-        let config = CameraConfig::from(self.deref());
+        let config: CameraConfig = CameraConfig::from(self.deref());
 
         if let Err(_e) = internal_update_camera_config(&client, &config).await {
             println!("Camera can not be updated");

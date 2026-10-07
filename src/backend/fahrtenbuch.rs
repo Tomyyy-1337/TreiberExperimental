@@ -1,8 +1,7 @@
-use std::collections::VecDeque;
-
+use std::{collections::VecDeque, time::Duration};
 use crate::global::Global;
 
-pub static FAHRTENBUCH_STATE: Global<Fahrtenbuch> = Global::new(Fahrtenbuch::new());
+pub static FAHRTENBUCH: Global<Fahrtenbuch> = Global::new(Fahrtenbuch::new());
 
 const MAX_ENTRIES: usize = 20;
 
@@ -17,6 +16,31 @@ impl Fahrtenbuch {
             next_id: 0,
             entries: VecDeque::new(),
         }
+    }
+
+    pub fn get(&self, id: u32) -> Option<&Fahrt> {
+        self.entries.iter().find(|entry| entry.id == id).map(|indexed| &indexed.entry)
+    }
+
+    pub fn get_id_of_next(&self, id: u32) -> Option<u32> {
+        let current_index = self.entries.iter().position(|entry| entry.id == id)?;
+
+        let next_index = current_index + 1;
+        if next_index >= self.entries.len() {
+            return None;
+        }
+
+        Some(self.entries[next_index].id)
+    }
+
+    pub fn get_id_of_previous(&self, id: u32) -> Option<u32> {
+        let current_index = self.entries.iter().position(|entry| entry.id == id)?;
+
+        if current_index == 0 {
+            return None;
+        }
+
+        Some(self.entries[current_index - 1].id)
     }
 
     pub fn add_entry(&mut self, entry: Fahrt) {
@@ -37,6 +61,10 @@ pub struct IndexedFahrt {
     pub entry: Fahrt,
 }
 
+#[derive(Clone)]
 pub struct Fahrt {
-    pub gesamtstrecke: f64,
+    pub start_time: String,
+    pub dauer: Duration,
+    pub strecke_km: f64,
+    pub schläge: u32,
 }

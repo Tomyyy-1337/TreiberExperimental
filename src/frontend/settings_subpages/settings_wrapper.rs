@@ -42,7 +42,7 @@ pub async fn settings_container(
     child: Child<'_>
 ) -> Result<impl View> {
     Ok(view! {
-        <article class="grid gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+        <article class="grid gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground">
             <div class="grid gap-1">
                 <h3 class="text-base font-semibold"> (title) </h3>
                 if description != "" {

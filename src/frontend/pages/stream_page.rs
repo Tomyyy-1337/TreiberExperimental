@@ -37,7 +37,7 @@ async fn stream_player() -> Result<impl View> {
 #[component]
 async fn collapsable_section(title: &str, child: Child<'_>) -> Result<impl View> {
     Ok(view! {
-        <details class="my-4 rounded-2xl border-2 border-border bg-card [interpolate-size:allow-keywords] [&::details-content]:[block-size:0] [&::details-content]:overflow-hidden [&::details-content]:opacity-0 [&::details-content]:transition-all [&::details-content]:duration-300 [&::details-content]:ease-in-out [&::details-content]:[transition-behavior:allow-discrete] open:[&::details-content]:[block-size:auto] open:[&::details-content]:opacity-100">
+        <details class="my-4 rounded-2xl border-1 border-border bg-card [interpolate-size:allow-keywords] [&::details-content]:[block-size:0] [&::details-content]:overflow-hidden [&::details-content]:opacity-0 [&::details-content]:transition-all [&::details-content]:duration-300 [&::details-content]:ease-in-out [&::details-content]:[transition-behavior:allow-discrete] open:[&::details-content]:[block-size:auto] open:[&::details-content]:opacity-100">
             <summary class="cursor-pointer p-4 text-lg font-semibold"> 
                 (title) 
             </summary>

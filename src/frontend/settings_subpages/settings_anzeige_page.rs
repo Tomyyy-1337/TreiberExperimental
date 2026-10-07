@@ -1,4 +1,4 @@
-use topcoat::{Result, context::Cx, cookie::{Cookies, cookies}, router::page, runtime::{Event, signal}, view::{Attributes, Child, View, attributes, component, view}};
+use topcoat::{Result, context::Cx, cookie::{Cookies, cookies}, router::page, runtime::{Event, signal}, view::{Attributes, View, attributes, component, view}};
 
 use crate::frontend::settings_subpages::settings_wrapper::{settings_container, settings_wrapper};
 

@@ -42,7 +42,7 @@ async fn select_widget<T: ToString + Send + Sync + PartialEq + 'static>(
     on_select: Attributes
 ) -> Result<impl View> {
     Ok(view! {
-        <label class="grid min-w-0 gap-1 rounded-lg border border-border bg-card p-2.5 shadow-xs transition-colors has-[:focus-visible]:border-ring">
+        <label class="grid min-w-0 gap-1 rounded-lg border border-border bg-card p-2.5 transition-colors has-[:focus-visible]:border-ring">
             <span class="block text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground"> (title) </span>
             <select 
                 (on_select) 
@@ -194,7 +194,7 @@ async fn set_bitrate(value: String) -> Result<()> {
 #[component]
 async fn hdr_settings(hdr_enabled: &Signal<bool>) -> Result<impl View> {
     Ok(view! {
-        <label class="flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 shadow-xs transition-colors has-[:checked]:border-primary">
+        <label class="flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 transition-colors">
             <span class="grid min-w-0 gap-1">
                 <span class="text-sm font-medium">"HDR"</span>
                 <small class="text-[0.68rem] leading-none text-muted-foreground">$(if hdr_enabled.get() {"Aktiv"} else {"Aus"})</small>
@@ -226,7 +226,7 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
     let auto_level_enabled: Signal<bool> = signal(cx, || false);
 
     Ok(view! {
-        <label class="flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 shadow-xs transition-colors has-[:checked]:border-primary">
+        <label class="flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 transition-colors">
             <span class="grid min-w-0 gap-1">
                 <span class="text-sm font-medium">"Auto Level"</span>
                 <small class="text-[0.68rem] leading-none text-muted-foreground">$(if auto_level_enabled.get() {"Aktiv"} else {"Aus"})</small>
@@ -253,7 +253,7 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
 
     Ok(view! {
         <div :hidden=$(hdr_enabled.get())>
-            <section class="my-0 grid h-24 content-start gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-xs">
+            <section class="my-0 grid h-24 content-start gap-2 rounded-lg border border-border bg-card px-3 py-2">
                 <div class="flex items-center justify-between">
                     <span class="text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">"Belichtung"</span>
                     <output for="camera-exposure-compensation" class="text-sm font-semibold tabular-nums text-card-foreground">

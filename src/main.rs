@@ -2,10 +2,12 @@ mod global;
 mod frontend;
 mod backend;
 
+use std::time::Duration;
+
 use tokio::{runtime::LocalOptions, task};
 use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
 
-use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH_STATE, Fahrt}}, global::Global}; 
+use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, Fahrt}}, global::Global}; 
 
 struct BatteryState {
     pub battery_percentage: u8,
@@ -29,11 +31,14 @@ static GPS_STATE: Global<GpsState> = Global::new(
 
 fn main() {
     // Add fake Fahrtenbuch entries
-    FAHRTENBUCH_STATE.modify(|state| {
+    FAHRTENBUCH.modify(|state| {
         for i in 0..20 {
             state.add_entry(
                 Fahrt {
-                    gesamtstrecke: (i * 10) as f64,
+                    start_time: format!("2024-06-{}", i + 1),
+                    dauer: Duration::from_mins(i),
+                    strecke_km: (i * 10) as f64,
+                    schläge: (i * 5) as u32,
                 }
             );
         }
@@ -45,7 +50,7 @@ fn main() {
         .build_local(LocalOptions::default())
         .unwrap()
         .block_on(async {
-            // Initialize Camera Interface
+            // Sent initial Camera configuration to the camera
             tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
             
             // Spawn backend Tasks

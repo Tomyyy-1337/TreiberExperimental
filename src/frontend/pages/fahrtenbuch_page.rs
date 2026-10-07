@@ -1,42 +1,40 @@
-use topcoat::{Result, context::Cx, router::page, runtime::{procedure, signal}, view::{View, component, view}};
-use crate::{backend::fahrtenbuch::{FAHRTENBUCH_STATE, Fahrt, IndexedFahrt}, frontend::layouts::nav_layout::nav_layout};
+use topcoat::{Result, router::{href, page}, runtime::link, view::{View, attributes, component, view}};
+use crate::{backend::fahrtenbuch::{FAHRTENBUCH, Fahrt, IndexedFahrt}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{PostId, fahrtenbuch_eintrag}}};
 
 #[page("/fahrtenbuch")]
 pub async fn fahrtenbuch_page() -> Result<impl View> { 
     Ok(view! { 
         nav_layout(
-            <h2> "Fahrtenbuch Page" </h2>
-
-            #[key(id)]
-            for IndexedFahrt { id, entry } in FAHRTENBUCH_STATE.entries.iter() {
-                fahrtenbuch_eintragen(id: *id, entry: entry)
-            }
+            <div class="my-4 grid gap-3">
+                for IndexedFahrt { id, entry } in FAHRTENBUCH.entries.iter() {
+                    fahrtenbuch_eintragen(id: *id, entry: entry)
+                }
+            </div>
         )
     })
 }
 
 #[component]
-async fn fahrtenbuch_eintragen(cx: &Cx, id: u32, entry: &Fahrt) -> Result<impl View> {
-    let shown = signal(cx, || true);
-
+async fn fahrtenbuch_eintragen(id: u32, entry: &Fahrt) -> Result<impl View> {
+    let time_secs = entry.dauer.as_secs();
+    let time_mins = time_secs / 60;
+    
     Ok(view! {
-        <div :hidden=$(!shown.get())>  
-            <p> ( format!("Gesamtstrecke: {}", entry.gesamtstrecke) ) </p>
+        link(
+            href: href!(fahrtenbuch_eintrag, PostId(id)),
+            attrs: attributes!(class="group block text-inherit no-underline"),
             
-            <button 
-                @click=$(async |_event| {
-                    delete_fahrtenbuch_entry(id).await;
-                    shown.set(false);
-                })
-            > "Delete" </button>
-        </div>
-    })
-}
+            <article class="grid gap-2 rounded-2xl border border-border bg-card p-3 transition-colors group-active:bg-background">
+                <div class="flex items-start justify-between gap-3">
+                    <h3 class="text-base font-semibold text-card-foreground"> "Fahrt am " (&entry.start_time)</h3>
+                    <span class="shrink-0 rounded-md px-2 text-sm font-semibold text-muted-foreground"> "Mehr" </span>
+                </div>
 
-#[procedure("/api/delete_fahrtenbuch_entry")]
-async fn delete_fahrtenbuch_entry(entry_id: u32) -> Result<()> {
-    FAHRTENBUCH_STATE.modify(|state| {
-        state.entries.retain(|entry| entry.id != entry_id);
-    });
-    Ok(())
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="py-1 rounded-full bg-background px-3 text-sm font-medium text-muted-foreground">(&entry.strecke_km) " km"</span>
+                    <span class="py-1 rounded-full bg-background px-3 text-sm font-medium text-muted-foreground"> (time_mins) ":" ( format!("{:02}", time_secs % 60)) " min"</span>
+                </div>
+            </article>
+        )
+    })
 }
