@@ -3,12 +3,12 @@ mod frontend;
 mod backend;
 
 use tokio::{runtime::LocalOptions, task};
-use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
+use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt, record}, view::component};
 
 use crate::{backend::camera_interface::CAMERA_INTERFACE, global::Global}; 
 
 struct BatteryState {
-    battery_percentage: u8,
+    pub battery_percentage: u8,
 }
 
 static BATTERY_STATE: Global<BatteryState> = Global::new(
@@ -18,7 +18,7 @@ static BATTERY_STATE: Global<BatteryState> = Global::new(
 );
 
 struct GpsState {
-    satellite_count: u8,
+    pub satellite_count: u8,
 }
 
 static GPS_STATE: Global<GpsState> = Global::new(
@@ -27,7 +27,44 @@ static GPS_STATE: Global<GpsState> = Global::new(
     }
 );
 
+struct FahrtenbuchState {
+    pub next_id: u32,
+    pub entries: Vec<FahrtenbuchEntry>,
+}
+
+impl FahrtenbuchState {
+    pub fn add_entry(&mut self, gesamtstrecke: f64) {
+        let entry = FahrtenbuchEntry {
+            id: self.next_id,
+            gesamtstrecke,
+        };
+        self.next_id += 1;
+        self.entries.push(entry);
+    }
+}
+
+#[record]
+#[derive(Clone)]
+struct FahrtenbuchEntry {
+    id: u32,
+    gesamtstrecke: f64,
+}
+
+static FAHRTENBUCH_STATE: Global<FahrtenbuchState> = Global::new(
+    FahrtenbuchState {
+        next_id: 0,
+        entries: Vec::new(),
+    }
+);
+
 fn main() {
+    FAHRTENBUCH_STATE.modify(|state| {
+        for i in 0..20 {
+            state.add_entry((i * 10) as f64);
+        }
+    });
+
+
     tokio::runtime::Builder::new_current_thread()
         .max_blocking_threads(4)
         .enable_all()
