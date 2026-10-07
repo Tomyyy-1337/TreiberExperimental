@@ -1,11 +1,11 @@
 use topcoat::{Result, context::Cx, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure}, view::{View, attributes, view}};
 use crate::{backend::fahrtenbuch::FAHRTENBUCH, frontend::pages::fahrtenbuch_page::fahrtenbuch_page};
 
-path_param!(pub post_id: u32);
+path_param!(pub fahrtenbuch_id: u32);
 
-#[page("/fahrtenbuch/{post_id}")]
+#[page("/fahrtenbuch/{fahrtenbuch_id}")]
 pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
-    let post_id = *path_param::<PostId>(cx).ok_or_not_found()?;
+    let post_id = *path_param::<FahrtenbuchId>(cx).ok_or_not_found()?;
     let entry = FAHRTENBUCH.get(post_id).ok_or_not_found()?;
 
     let next_id = FAHRTENBUCH.get_id_of_next(post_id);
@@ -33,7 +33,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                 <div class="flex items-center justify-between border-t border-border pt-3">
                     if let Some(previous_id) = previous_id {
                         link(
-                            href: href!(fahrtenbuch_eintrag, PostId(previous_id)),
+                            href: href!(fahrtenbuch_eintrag, FahrtenbuchId(previous_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
                             prefetch: PrefetchMode::Viewport
                             "Vorherige Fahrt"
@@ -44,7 +44,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
 
                     if let Some(next_id) = next_id {
                         link(
-                            href: href!(fahrtenbuch_eintrag, PostId(next_id)),
+                            href: href!(fahrtenbuch_eintrag, FahrtenbuchId(next_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
                             prefetch: PrefetchMode::Viewport
                             "Nächste Fahrt"
