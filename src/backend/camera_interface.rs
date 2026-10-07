@@ -36,24 +36,27 @@ pub struct CameraInterface {
 }
 
 impl Global<CameraInterface> {
-    pub fn modify_and_send<F>(&self, f: F)
+    pub async fn modify_and_send<F>(&self, f: F)
     where
         F: FnOnce(&mut CameraInterface),
     {
         self.modify(|s| f(s));
+        
         self.send_to_camera();
     }
 }
 
 impl CameraInterface {
     pub fn send_to_camera(&self) {
-        let client = Client::builder().build().unwrap();
-
         let config = CameraConfig::from(self);
-
-        tokio::spawn(async move {
-            let _e = internal_update_camera_config(&client, &config).await;
-            // println!("Result of updating camera config: {:?}", e);
+        
+        tokio::task::spawn_local(async move { 
+            let client = Client::builder().build().unwrap();
+            
+            let err = internal_update_camera_config(&client, &config).await;
+            if let Err(_e) = err {
+                println!("Camera can not be updated");
+            }
         });
     }
 

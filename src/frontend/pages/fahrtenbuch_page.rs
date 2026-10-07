@@ -1,5 +1,5 @@
-use topcoat::{Result, context::Cx, router::page, runtime::{Signal, procedure, shard, signal}, view::{View, component, view}};
-use crate::{FAHRTENBUCH_STATE, FahrtenbuchEntry, frontend::layouts::nav_layout::nav_layout};
+use topcoat::{Result, context::Cx, router::page, runtime::{procedure, signal}, view::{View, component, view}};
+use crate::{backend::fahrtenbuch::{FAHRTENBUCH_STATE, Fahrt, IndexedFahrt}, frontend::layouts::nav_layout::nav_layout};
 
 #[page("/fahrtenbuch")]
 pub async fn fahrtenbuch_page() -> Result<impl View> { 
@@ -7,28 +7,27 @@ pub async fn fahrtenbuch_page() -> Result<impl View> {
         nav_layout(
             <h2> "Fahrtenbuch Page" </h2>
 
-            #[key(entry.id)]
-            for entry in FAHRTENBUCH_STATE.entries.iter() {
-                fahrtenbuch_eintragen(entry: entry)
+            #[key(id)]
+            for IndexedFahrt { id, entry } in FAHRTENBUCH_STATE.entries.iter() {
+                fahrtenbuch_eintragen(id: *id, entry: entry)
             }
         )
     })
 }
 
 #[component]
-async fn fahrtenbuch_eintragen(cx: &Cx, entry: &FahrtenbuchEntry) -> Result<impl View> {
+async fn fahrtenbuch_eintragen(cx: &Cx, id: u32, entry: &Fahrt) -> Result<impl View> {
     let shown = signal(cx, || true);
-    let id = entry.id;
 
     Ok(view! {
         <div :hidden=$(!shown.get())>  
             <p> ( format!("Gesamtstrecke: {}", entry.gesamtstrecke) ) </p>
             
             <button 
-            @click=$(async |_event| {
-                delete_fahrtenbuch_entry(id).await;
-                shown.set(false);
-            })
+                @click=$(async |_event| {
+                    delete_fahrtenbuch_entry(id).await;
+                    shown.set(false);
+                })
             > "Delete" </button>
         </div>
     })
