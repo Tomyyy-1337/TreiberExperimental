@@ -5,7 +5,7 @@ mod backend;
 use std::time::Duration;
 
 use tokio::{runtime::LocalOptions, task};
-use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
+use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDirectoryExt, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
 
 use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, Fahrt}}, global::Global}; 
 
@@ -65,6 +65,7 @@ fn main() {
                     .compression(Compression::new().brotli(false).level(CompressionLevel::Balanced))
                     .runtime()
                     .prefetch(PrefetchMode::Never)
+                    .serve_dir("/map/{*file}", "map")
                     // .origin_policy(OriginPolicy::dangerous_disable())
                     .build()
             )

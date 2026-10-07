@@ -1,7 +1,7 @@
-use topcoat::{Result, context::Cx, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure}, view::{View, attributes, view}};
+use topcoat::{Result, asset::{self, Asset, asset}, context::Cx, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure}, view::{DynViewPart, View, attributes, component, view}};
 use crate::{backend::fahrtenbuch::FAHRTENBUCH, frontend::pages::fahrtenbuch_page::fahrtenbuch_page};
 
-path_param!(pub fahrtenbuch_id: u32);
+path_param!(pub fahrtenbuch_id: u32, error = not_found);
 
 #[page("/fahrtenbuch/{fahrtenbuch_id}")]
 pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
@@ -35,7 +35,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                         link(
                             href: href!(fahrtenbuch_eintrag, FahrtenbuchId(previous_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
-                            prefetch: PrefetchMode::Viewport
+                            prefetch: PrefetchMode::Viewport,
                             "Vorherige Fahrt"
                         )
                     } else {
@@ -46,13 +46,15 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                         link(
                             href: href!(fahrtenbuch_eintrag, FahrtenbuchId(next_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
-                            prefetch: PrefetchMode::Viewport
+                            prefetch: PrefetchMode::Viewport,   
                             "Nächste Fahrt"
                         )
                     }
                 </div>
             }
         </section>
+
+        map_component(id: post_id)
 
         <section class="my-4 mx-2 grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs">
             <div class="col-span-2 grid gap-1 rounded-xl border border-border bg-background p-4">
@@ -97,7 +99,6 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                 "Eintrag löschen"
             )
         </section>
-
     })
 }
 
@@ -107,4 +108,28 @@ async fn delete_fahrtenbuch_entry(entry_id: u32) -> Result<()> {
         state.entries.retain(|entry| entry.id != entry_id);
     });
     Ok(())
+}
+
+pub const PMTILES: Asset = asset!("https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js");
+pub const MAP_LIBRE_CSS: Asset = asset!("../../../static/maplibre-gl.css");
+
+#[component]
+async fn map_component(id: u32) -> Result<impl View> {
+    Ok(view! {
+        <div id=(format!("map{}", id)) style="width: 100%; height: 400px;"></div>
+        
+        <script src=(PMTILES)></script>
+        <link href=(MAP_LIBRE_CSS) rel="stylesheet">
+
+        <script type="module">
+           "import * as maplibregl from '/map/maplibre-gl.mjs';
+
+            const map = new maplibregl.Map({
+                container: "(format!("map{}", id))",
+                style: 'https://demotiles.maplibre.org/globe.json',
+                center: [0, 0],
+                zoom: 1
+            });"
+        </script>
+    })
 }
