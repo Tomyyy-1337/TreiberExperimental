@@ -24,7 +24,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                         class= "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-card text-3xl font-medium leading-none text-muted-foreground"
                         aria-label= "Zurück zum Fahrtenbuch"
                         title= "Zurück"
-                    }
+                    },
                     "×"
                 )
             </div>
@@ -35,7 +35,6 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                         link(
                             href: href!(fahrtenbuch_eintrag, FahrtenbuchId(previous_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
-                            prefetch: PrefetchMode::Viewport,
                             "Vorherige Fahrt"
                         )
                     } else {
@@ -45,8 +44,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                     if let Some(next_id) = next_id {
                         link(
                             href: href!(fahrtenbuch_eintrag, FahrtenbuchId(next_id)),
-                            attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
-                            prefetch: PrefetchMode::Viewport,   
+                            attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"), 
                             "Nächste Fahrt"
                         )
                     }
@@ -110,26 +108,11 @@ async fn delete_fahrtenbuch_entry(entry_id: u32) -> Result<()> {
     Ok(())
 }
 
-pub const PMTILES: Asset = asset!("https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js");
-pub const MAP_LIBRE_CSS: Asset = asset!("../../../static/maplibre-gl.css");
-
 #[component]
 async fn map_component(id: u32) -> Result<impl View> {
     Ok(view! {
-        <div id=(format!("map{}", id)) style="width: 100%; height: 400px;"></div>
-        
-        <script src=(PMTILES)></script>
-        <link href=(MAP_LIBRE_CSS) rel="stylesheet">
-
-        <script type="module">
-           "import * as maplibregl from '/map/maplibre-gl.mjs';
-
-            const map = new maplibregl.Map({
-                container: "(format!("map{}", id))",
-                style: 'https://demotiles.maplibre.org/globe.json',
-                center: [0, 0],
-                zoom: 1
-            });"
-        </script>
+        <div id=(format!("mapContainer{}", id))>
+            <div id=(format!("map{}", id)) style="width: 100%; height: 400px;"></div>
+        </div>
     })
 }
