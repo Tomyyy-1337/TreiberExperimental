@@ -7,7 +7,7 @@ path_param!(pub id: u32);
 #[page("/fahrtenbuch/{id}")]
 pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
     let post_id = *path_param::<Id>(cx).ok_or_not_found()?;
-    let entry = FAHRTENBUCH.get(post_id).ok_or_not_found()?;
+    let entry = FAHRTENBUCH.get(post_id).ok_or_redirect(href!(fahrtenbuch_page).resolve(cx))?;
 
     let next_id = FAHRTENBUCH.get_id_of_next(post_id);
     let previous_id = FAHRTENBUCH.get_id_of_previous(post_id);

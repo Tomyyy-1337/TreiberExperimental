@@ -2,13 +2,12 @@ mod global;
 mod frontend;
 mod backend;
 
-use std::path::PathBuf;
 use std::time::Duration;
 
-use tokio::{io::{AsyncReadExt, AsyncSeekExt}, runtime::LocalOptions, task};
-use topcoat::router::{RouterBuilderDirectoryExt, StripPrefixLayer, TrailingSlash::Serve, tower::{TowerLayer, TowerRoute}};
-use topcoat::router::response::Response;
-use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, context::Cx, cookie::RouterBuilderCookieExt, router::{header::{ACCEPT_RANGES, CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, RANGE}, Body, Compression, CompressionLevel, Method, RouteFn, RouteFuture, Router, RouterBuilderDiscoverExt, StatusCode}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
+use tokio::{runtime::LocalOptions, task};
+use topcoat::router::tower::TowerRoute;
+use topcoat::router::{StripPrefixLayer};
+use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
 use tower_http::services::ServeDir;
 
 use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, Fahrt, GpsPosition}}, global::Global}; 
