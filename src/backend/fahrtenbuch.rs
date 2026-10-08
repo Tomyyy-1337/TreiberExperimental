@@ -72,7 +72,7 @@ pub struct Fahrt {
     pub position_history: Vec<GpsPosition>,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Copy, Serialize)]
 pub struct GpsPosition {
     pub latitude: f64,
     pub longitude: f64,

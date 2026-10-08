@@ -93,7 +93,7 @@ fn main() {
                     .runtime()
                     .prefetch(PrefetchMode::Never)
                     .serve_dir("/static/{*file}", "static/public")
-                    // Tower for serving map files as range requests (topcoat does not support range requests v0.10.0)
+                    // Tower for serving map files as range requests (topcoat does not support range requests in v0.10.0)
                     .layer(StripPrefixLayer::new("/maps"))
                     .route(TowerRoute::any("/maps/{*file}", ServeDir::new("maps")))
                     // .origin_policy(OriginPolicy::dangerous_disable())

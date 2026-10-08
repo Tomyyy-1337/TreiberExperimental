@@ -8,7 +8,6 @@ let loadingElement;
 let themeObserver;
 
 const PMTILES_MAGIC_NUMBER = 19792;
-const PMTILES_VERIFY_TIMEOUT_MS = 3000;
 const pmtilesFiles = ['germany.pmtiles', 'france.pmtiles', 'belgium.pmtiles', 'netherlands.pmtiles', 'poland.pmtiles', 'denmark.pmtiles', 'czech_republic.pmtiles', 'luxembourg.pmtiles'];
 let currentPmtilesFiles = [];
 let pmtilesProtocolRegistered = false;
@@ -24,28 +23,10 @@ const getMapPalette = (theme) => theme === 'dark' ? {
 const buildLanduseColorExpression = (palette) => ['match', ['get', 'class'], 'residential', palette.landuse.residential, 'suburb', palette.landuse.suburb, 'neighbourhood', palette.landuse.suburb, 'commercial', palette.landuse.commercial, 'retail', palette.landuse.commercial, 'industrial', palette.landuse.industrial, 'hospital', palette.landuse.hospital, 'military', palette.landuse.military, 'quarry', palette.landuse.quarry, 'theme_park', palette.landuse.themePark, 'cemetery', palette.landuse.cemetery, 'track', palette.landuse.track, palette.landuse.fallback];
 const pmtilesSourceName = (filename) => filename.replace(/\.pmtiles$/, '');
 
-const verifyPmtilesFile = async (url) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), PMTILES_VERIFY_TIMEOUT_MS);
-    try {
-        const response = await fetch(url, { headers: { Range: 'bytes=0-1' }, signal: controller.signal });
-        if (!response.ok) return false;
-        if (response.body) {
-            const reader = response.body.getReader();
-            const { value } = await reader.read();
-            await reader.cancel();
-            return value?.byteLength >= 2 && new DataView(value.buffer, value.byteOffset).getUint16(0, true) === PMTILES_MAGIC_NUMBER;
-        }
-        const bytes = await response.arrayBuffer();
-        return bytes.byteLength >= 2 && new DataView(bytes).getUint16(0, true) === PMTILES_MAGIC_NUMBER;
-    } catch { return false; } finally { clearTimeout(timeoutId); }
-};
-
-const discoverPmtilesBaseUrl = async () => {
-    const baseUrl = `${window.location.origin}/maps`;
-    const validFiles = (await Promise.all(pmtilesFiles.map(async (filename) => await verifyPmtilesFile(`${baseUrl}/${filename}`) ? filename : null))).filter((filename) => filename !== null);
-    return { baseUrl, validFiles };
-};
+const discoverPmtilesBaseUrl = () => ({
+    baseUrl: `${window.location.origin}/maps`,
+    validFiles: pmtilesFiles
+});
 
 const buildSourceLayers = (sourceName, palette) => [
     { id: `${sourceName}-landuse`, type: 'fill', source: sourceName, 'source-layer': 'landuse', paint: { 'fill-color': buildLanduseColorExpression(palette), 'fill-opacity': 1 } },
@@ -82,7 +63,7 @@ function isMapRoute(href) {
     return url.origin === window.location.origin && /^\/fahrtenbuch\/[^/]+\/?$/.test(url.pathname);
 }
 
-const getMapElement = () => document.querySelector('[id^="mapContainer"] > [id^="map"]');
+const getMapElement = () => document.querySelector('[id^="map"]');
 
 const getEntryId = () => {
     const match = window.location.pathname.match(/^\/fahrtenbuch\/(\d+)\/?$/);
@@ -140,7 +121,7 @@ const loadMap = async (element, version) => {
     loadingElement = element;
     mapModulePromise ??= import('/static/maplibre-gl.mjs');
     const maplibregl = await mapModulePromise;
-    const { baseUrl, validFiles } = await discoverPmtilesBaseUrl();
+    const { baseUrl, validFiles } = discoverPmtilesBaseUrl();
 
     if (version !== navigationVersion || !shouldLoadMap || !element.isConnected || element !== getMapElement()) {
         if (loadingElement === element) {

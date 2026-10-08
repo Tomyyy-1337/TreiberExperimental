@@ -6,6 +6,7 @@ pub async fn fahrtenbuch_page() -> Result<impl View> {
     Ok(view! { 
         nav_layout(
             <div class="my-4 grid gap-3">
+                #[key(id)]
                 for IndexedFahrt { id, entry } in FAHRTENBUCH.entries.iter() {
                     fahrtenbuch_eintragen(id: *id, entry: entry)
                 }
