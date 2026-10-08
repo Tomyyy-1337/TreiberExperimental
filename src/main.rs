@@ -1,4 +1,4 @@
-mod global;
+pub mod global;
 mod frontend;
 mod backend;
 
