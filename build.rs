@@ -6,6 +6,12 @@ const PUBLIC_ASSETS: &[&str] = &[
     "https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js",
 ];
 
+fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+    download_public_assets().expect("failed to download static public assets");
+    topcoat::tailwind::BuildConfig::new().input("styles.css").render().unwrap();
+}
+
 fn download_public_assets() -> Result<(), Box<dyn std::error::Error>> {
     let public_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR")?).join("static/public");
     fs::create_dir_all(&public_dir)?;
@@ -42,10 +48,4 @@ fn compress_asset(asset_path: &PathBuf, filename: &str) -> Result<(), Box<dyn st
     fs::write(gzip_path, encoder.finish()?)?;
 
     Ok(())
-}
-
-fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
-    download_public_assets().expect("failed to download static public assets");
-    topcoat::tailwind::BuildConfig::new().input("styles.css").render().unwrap();
 }
