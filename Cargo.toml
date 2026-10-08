@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-topcoat = { version = "0.10.0", features = ["asset", "fs", "runtime", "websocket", "asset", "compression", "tailwind", "font-fontsource"] }
+topcoat = { version = "0.10.0", features = ["asset", "fs", "runtime", "websocket", "asset", "compression", "tailwind", "font-fontsource", "tower"] }
 tokio = { version = "1.53.2", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 reqwest = { version = "0.13.5", features = ["json"], default-features = false }
+tower-http = { version = "0.7.1", features = ["fs", "cors"] }
 
 [build-dependencies]
 topcoat = { version = "0.10.0", default-features = false, features = ["tailwind"] }

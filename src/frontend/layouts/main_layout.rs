@@ -16,13 +16,10 @@ pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             
             <script src=(PMTILES)></script>
-            // <link href=(MAP_LIBRE_CSS) rel="stylesheet">
             <script type="module" src=(LOAD_MAP)></script>
-            
             <script type="module" src=(STREAM_SCRIPT)></script>
-
-            <link rel="stylesheet" href=(topcoat::tailwind::stylesheet!())>
             topcoat::runtime::script()
+            <link rel="stylesheet" href=(topcoat::tailwind::stylesheet!())>
         </head>
         <html class=(theme_cookie.as_ref().map(|c| c.value()).unwrap_or("dark"))>
             <body class="min-h-screen bg-background text-foreground antialiased">

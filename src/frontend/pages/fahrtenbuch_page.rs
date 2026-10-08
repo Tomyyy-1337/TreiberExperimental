@@ -1,5 +1,5 @@
-use topcoat::{Result, router::{href, page}, runtime::link, view::{View, attributes, component, view}};
-use crate::{backend::fahrtenbuch::{FAHRTENBUCH, Fahrt, IndexedFahrt}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{FahrtenbuchId, fahrtenbuch_eintrag}}};
+use topcoat::{Result, router::{href, page}, runtime::{PrefetchMode, link}, view::{View, attributes, component, view}};
+use crate::{backend::fahrtenbuch::{FAHRTENBUCH, Fahrt, IndexedFahrt}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{Id, fahrtenbuch_eintrag}}};
 
 #[page("/fahrtenbuch")]
 pub async fn fahrtenbuch_page() -> Result<impl View> { 
@@ -21,8 +21,9 @@ async fn fahrtenbuch_eintragen(id: u32, entry: &Fahrt) -> Result<impl View> {
     
     Ok(view! {
         link(
-            href: href!(fahrtenbuch_eintrag, FahrtenbuchId(id)),
+            href: href!(fahrtenbuch_eintrag, Id(id)),
             attrs: attributes!(class="group block text-inherit no-underline"),
+            prefetch: PrefetchMode::Never,
             
             <article class="grid gap-2 rounded-2xl border border-border bg-card p-3 transition-colors group-active:bg-background">
                 <div class="flex items-start justify-between gap-3">

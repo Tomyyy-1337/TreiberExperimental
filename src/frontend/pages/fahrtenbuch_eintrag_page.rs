@@ -1,11 +1,12 @@
-use topcoat::{Result, asset::{self, Asset, asset}, context::Cx, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure}, view::{DynViewPart, View, attributes, component, view}};
-use crate::{backend::fahrtenbuch::FAHRTENBUCH, frontend::pages::fahrtenbuch_page::fahrtenbuch_page};
+use topcoat::{Result, context::Cx, router::{content::Json, error::RouterErrorExt, href, page, path_param, route}, runtime::{Event, PrefetchMode, link, procedure}, view::{View, attributes, component, view}};
+use crate::{backend::fahrtenbuch::{FAHRTENBUCH, GpsPosition}, frontend::pages::fahrtenbuch_page::fahrtenbuch_page};
 
-path_param!(pub fahrtenbuch_id: u32, error = not_found);
+path_param!(pub id: u32);
 
-#[page("/fahrtenbuch/{fahrtenbuch_id}")]
+
+#[page("/fahrtenbuch/{id}")]
 pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
-    let post_id = *path_param::<FahrtenbuchId>(cx).ok_or_not_found()?;
+    let post_id = *path_param::<Id>(cx).ok_or_not_found()?;
     let entry = FAHRTENBUCH.get(post_id).ok_or_not_found()?;
 
     let next_id = FAHRTENBUCH.get_id_of_next(post_id);
@@ -33,9 +34,10 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                 <div class="flex items-center justify-between border-t border-border pt-3">
                     if let Some(previous_id) = previous_id {
                         link(
-                            href: href!(fahrtenbuch_eintrag, FahrtenbuchId(previous_id)),
+                            href: href!(fahrtenbuch_eintrag, Id(previous_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
-                            "Vorherige Fahrt"
+                            prefetch: PrefetchMode::Never,
+                            "Nächste Fahrt"
                         )
                     } else {
                         <span></span>
@@ -43,9 +45,10 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
 
                     if let Some(next_id) = next_id {
                         link(
-                            href: href!(fahrtenbuch_eintrag, FahrtenbuchId(next_id)),
+                            href: href!(fahrtenbuch_eintrag, Id(next_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"), 
-                            "Nächste Fahrt"
+                            prefetch: PrefetchMode::Never,
+                            "Vorherige Fahrt"
                         )
                     }
                 </div>
@@ -115,4 +118,11 @@ async fn map_component(id: u32) -> Result<impl View> {
             <div id=(format!("map{}", id)) style="width: 100%; height: 400px;"></div>
         </div>
     })
+}
+
+#[route(GET "/api/gps_position/{id}")]
+async fn gps_position(cx: &Cx) -> Result<Json<&'static Vec<GpsPosition>>> {
+    let id = *path_param::<Id>(cx).ok_or_not_found()?;
+    let entry = &FAHRTENBUCH.entries.iter().find(|entry| entry.id == id).ok_or_not_found()?.entry;
+    Ok(Json(&entry.position_history))
 }

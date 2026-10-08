@@ -1,4 +1,6 @@
 use std::{collections::VecDeque, time::Duration};
+use serde::Serialize;
+
 use crate::global::Global;
 
 pub static FAHRTENBUCH: Global<Fahrtenbuch> = Global::new(Fahrtenbuch::new());
@@ -67,4 +69,11 @@ pub struct Fahrt {
     pub dauer: Duration,
     pub strecke_km: f64,
     pub schläge: u32,
+    pub position_history: Vec<GpsPosition>,
+}
+
+#[derive(Clone, Serialize)]
+pub struct GpsPosition {
+    pub latitude: f64,
+    pub longitude: f64,
 }
