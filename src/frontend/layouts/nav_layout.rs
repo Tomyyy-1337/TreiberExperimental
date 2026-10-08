@@ -5,23 +5,21 @@ use crate::frontend::{icons::{battery_status::battery_status, satelite_status::s
 #[component]
 pub async fn nav_layout(child: Child<'_>) -> Result<impl View> {
     Ok(view! {
-        <div class="mx-auto w-full max-w-4xl px-2">
-            <section class="my-4 grid grid-cols-3 items-center rounded-2xl border border-border bg-card p-4">
-                <div class="justify-self-start">
-                    battery_status()
-                </div>
-                <h1 class="whitespace-nowrap text-center text-xl font-semibold tracking-tight"> "Ruder Cam Beta" </h1>
-                <div class="justify-self-end">
-                    satelite_status()
-                </div>
-            </section>
-            
-            <section class="my-4 rounded-2xl border border-border bg-card p-2">
-                navbar()
-            </section>
+        <section class="my-4 grid grid-cols-3 items-center rounded-2xl border border-border bg-card p-4">
+            <div class="justify-self-start">
+                battery_status()
+            </div>
+            <h1 class="whitespace-nowrap text-center text-xl font-semibold tracking-tight"> "Ruder Cam Beta" </h1>
+            <div class="justify-self-end">
+                satelite_status()
+            </div>
+        </section>
+        
+        <section class="my-4 rounded-2xl border border-border bg-card p-2">
+            navbar()
+        </section>
 
-            (child)
-        </div>
+        (child)
     })
 }
 

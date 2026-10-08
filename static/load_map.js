@@ -1,6 +1,8 @@
 let map;
 let mapElement;
 let mapModulePromise;
+let pmtilesModulePromise;
+let availableMapsPromise;
 let shouldLoadMap = isMapRoute(window.location.href);
 let pendingPath;
 let navigationVersion = 0;
@@ -8,9 +10,21 @@ let loadingElement;
 let themeObserver;
 
 const PMTILES_MAGIC_NUMBER = 19792;
-const pmtilesFiles = ['germany.pmtiles', 'france.pmtiles', 'belgium.pmtiles', 'netherlands.pmtiles', 'poland.pmtiles', 'denmark.pmtiles', 'czech_republic.pmtiles', 'luxembourg.pmtiles'];
 let currentPmtilesFiles = [];
 let pmtilesProtocolRegistered = false;
+
+const loadPmtilesModule = () => pmtilesModulePromise ??= new Promise((resolve, reject) => {
+    if (globalThis.pmtiles) {
+        resolve(globalThis.pmtiles);
+        return;
+    }
+
+    const script = document.createElement('script');
+    script.src = '/static/pmtiles.js';
+    script.onload = () => resolve(globalThis.pmtiles);
+    script.onerror = reject;
+    document.head.append(script);
+});
 
 const getMapPalette = (theme) => theme === 'dark' ? {
     background: '#121518', water: '#2f4f63', waterOutline: '#4f748a', roadMotorway: '#8b9aa6', roadTrunk: '#7f8d97', roadPrimary: '#73808b', roadSecondary: '#6a757f', roadOther: '#5f6973', textCapital: '#f0f3f6', textTown: '#dbe1e7', textVillage: '#c8d0d8', textHalo: '#0d1013',
@@ -23,10 +37,15 @@ const getMapPalette = (theme) => theme === 'dark' ? {
 const buildLanduseColorExpression = (palette) => ['match', ['get', 'class'], 'residential', palette.landuse.residential, 'suburb', palette.landuse.suburb, 'neighbourhood', palette.landuse.suburb, 'commercial', palette.landuse.commercial, 'retail', palette.landuse.commercial, 'industrial', palette.landuse.industrial, 'hospital', palette.landuse.hospital, 'military', palette.landuse.military, 'quarry', palette.landuse.quarry, 'theme_park', palette.landuse.themePark, 'cemetery', palette.landuse.cemetery, 'track', palette.landuse.track, palette.landuse.fallback];
 const pmtilesSourceName = (filename) => filename.replace(/\.pmtiles$/, '');
 
-const discoverPmtilesBaseUrl = () => ({
-    baseUrl: `${window.location.origin}/maps`,
-    validFiles: pmtilesFiles
-});
+const discoverPmtilesBaseUrl = async (element) => {
+    return availableMapsPromise ??= Promise.resolve().then(() => {
+        const validFiles = JSON.parse(element.getAttribute('available_maps') ?? '[]');
+        return {
+            baseUrl: `${window.location.origin}/maps`,
+            validFiles
+        };
+    });
+};
 
 const buildSourceLayers = (sourceName, palette) => [
     { id: `${sourceName}-landuse`, type: 'fill', source: sourceName, 'source-layer': 'landuse', paint: { 'fill-color': buildLanduseColorExpression(palette), 'fill-opacity': 1 } },
@@ -65,19 +84,11 @@ function isMapRoute(href) {
 
 const getMapElement = () => document.querySelector('[id^="map"]');
 
-const getEntryId = () => {
-    const match = window.location.pathname.match(/^\/fahrtenbuch\/(\d+)\/?$/);
-    return match ? match[1] : undefined;
-};
-
 const loadWaypointPath = async () => {
-    const entryId = getEntryId();
-    if (!entryId || !map) return;
+    if (!mapElement || !map) return;
 
     try {
-        const response = await fetch(`/api/gps_position/${entryId}`);
-        if (!response.ok) return;
-        const positions = await response.json();
+        const positions = JSON.parse(mapElement.getAttribute('gps_data') ?? '[]');
         const coordinates = positions
             .filter((position) => Number.isFinite(position.longitude) && Number.isFinite(position.latitude))
             .map((position) => [position.longitude, position.latitude]);
@@ -120,8 +131,8 @@ const destroyMap = () => {
 const loadMap = async (element, version) => {
     loadingElement = element;
     mapModulePromise ??= import('/static/maplibre-gl.mjs');
-    const maplibregl = await mapModulePromise;
-    const { baseUrl, validFiles } = discoverPmtilesBaseUrl();
+    const [maplibregl] = await Promise.all([mapModulePromise, loadPmtilesModule()]);
+    const { baseUrl, validFiles } = await discoverPmtilesBaseUrl(element);
 
     if (version !== navigationVersion || !shouldLoadMap || !element.isConnected || element !== getMapElement()) {
         if (loadingElement === element) {

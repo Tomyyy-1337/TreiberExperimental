@@ -1,5 +1,5 @@
-use topcoat::{Result, context::Cx, router::{content::Json, error::RouterErrorExt, href, page, path_param, route}, runtime::{Event, PrefetchMode, link, procedure, signal}, view::{View, attributes, component, view}};
-use crate::{backend::fahrtenbuch::{FAHRTENBUCH, GpsPosition}, frontend::pages::fahrtenbuch_page::fahrtenbuch_page};
+use topcoat::{Result, context::Cx, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure, signal}, view::{View, attributes, component, view}};
+use crate::{backend::fahrtenbuch::FAHRTENBUCH, frontend::pages::fahrtenbuch_page::fahrtenbuch_page};
 
 path_param!(pub id: u32);
 
@@ -15,7 +15,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
     let löschen_bestätigen = signal(&cx.keyed(post_id), || false);
 
     Ok(view! {
-        <section class="my-4 mx-2 grid gap-4 rounded-2xl border border-border bg-card p-4">
+        <section class="my-4 grid gap-4 rounded-2xl border border-border bg-card p-4">
             <div class="flex items-start justify-between gap-4">
                 <div class="grid gap-1">
                     <span class="text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">"Fahrt am"</span>
@@ -59,7 +59,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
 
         map_component(id: post_id)
 
-        <section class="my-4 mx-2 grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4">
+        <section class="my-4 grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-2">
             <div class="col-span-2 grid gap-1 rounded-xl border border-border bg-background p-4">
                 <span class="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">"Gesamtstrecke"</span>
                 <div class="flex items-baseline gap-1 text-2xl font-semibold tracking-tight text-card-foreground">
@@ -86,7 +86,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
             </div>
         </section>
 
-        <section class="my-4 mx-2 grid gap-3 rounded-2xl border border-destructive/40 bg-card p-4">
+        <section class="my-4 grid gap-3 rounded-2xl border border-destructive/40 bg-card p-4">
             <div class="grid gap-1">
                 <h3 class="text-sm font-semibold text-card-foreground">"Eintrag verwalten"</h3>
                 <p class="text-sm text-muted-foreground">"Diesen Fahrtenbucheintrag dauerhaft löschen."</p>
@@ -129,16 +129,21 @@ async fn delete_fahrtenbuch_entry(entry_id: u32) -> Result<()> {
 
 #[component]
 async fn map_component(id: u32) -> Result<impl View> {
+    let gps_data_json = serde_json::to_string(&FAHRTENBUCH.entries.iter().find(|entry| entry.id == id).ok_or_not_found()?.entry.position_history).unwrap();
+    let available_maps = std::fs::read_dir("./maps")?
+        .filter_map(|entry| entry.ok())
+        .filter_map(|entry| entry.file_name().into_string().ok())
+        .collect::<Vec<String>>();
+    let available_maps_json = serde_json::to_string(&available_maps).unwrap();
+
     Ok(view! {
-        <section class="pointer-events-none my-4 mx-2 overflow-hidden rounded-2xl bg-card [&_.maplibregl-canvas]:block border border-border">
-            <div id=(format!("map{}", id)) class="h-[400px] w-[calc(100%+1px)]"></div>
+        <section class="pointer-events-none my-4 overflow-hidden rounded-2xl bg-card [&_.maplibregl-canvas]:block border border-border">
+            <div 
+                id=(format!("map{}", id)) 
+                class="h-[400px] w-[calc(100%+1px)]"
+                gps_data=(gps_data_json)
+                available_maps=(available_maps_json)
+            ></div>
         </section>
     })
-}
-
-#[route(GET "/api/gps_position/{id}")]
-async fn gps_position(cx: &Cx) -> Result<Json<Vec<GpsPosition>>> {
-    let id = *path_param::<Id>(cx).ok_or_not_found()?;
-    let entry = &FAHRTENBUCH.entries.iter().find(|entry| entry.id == id).ok_or_not_found()?.entry;
-    Ok(Json(entry.position_history.clone()))
 }

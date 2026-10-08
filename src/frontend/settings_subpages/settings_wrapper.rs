@@ -9,12 +9,12 @@ pub async fn settings_wrapper(
     child: Child<'_>
 ) -> Result<impl View> {
     Ok(view! {
-        <div class="mx-auto grid w-full max-w-4xl gap-6 px-4 py-6">
+        <div class="grid w-full gap-6 py-6">
             <div class="flex items-start justify-between gap-4">
                 <header class="grid gap-1">
                     <h1 class="text-2xl font-semibold tracking-tight text-foreground"> (title) </h1>
                     if description != "" {
-                        <p class="max-w-2xl text-sm text-muted-foreground"> (description) </p>
+                        <p class="text-sm text-muted-foreground"> (description) </p>
                     }
                 </header>
                 link(

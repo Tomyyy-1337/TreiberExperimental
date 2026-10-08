@@ -1,6 +1,6 @@
-use topcoat::{Result, router::page, view::{Child, View, component, view}};
+use topcoat::{Result, context::Cx, router::page, runtime::{Event, connected, procedure, signal}, view::{Child, View, component, emit, live, view}};
 
-use crate::frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component};
+use crate::{FAHRT_STATE, FahrtStatus, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
 
 #[page("/")]
 pub async fn camera_page() -> Result<impl View> {
@@ -13,6 +13,8 @@ pub async fn camera_page() -> Result<impl View> {
 
                 settings_camera_component()
             )
+
+            fahrt_steuerung()
         )
     })
 }
@@ -24,7 +26,7 @@ async fn stream_player() -> Result<impl View> {
     Ok(view! {
         <section class="my-4 rounded-2xl border border-border bg-card p-2">
             <div
-                class="aspect-video w-full max-w-[960px] overflow-hidden rounded-lg bg-black"
+                class="aspect-video w-full overflow-hidden rounded-lg bg-black"
                 data-live-config=""
                 data-url=(MEDIAMTX_WEBRTC_URL)
             >
@@ -46,4 +48,61 @@ async fn collapsable_section(title: &str, child: Child<'_>) -> Result<impl View>
             </div>
         </details>
     })
+}
+
+#[component]
+async fn fahrt_steuerung(cx: &Cx) -> Result<impl View> {    
+    Ok(view! {
+        <p> "Fahrt Steuerung"</p>
+        
+        (live! {
+            let mut timer = tokio::time::interval(std::time::Duration::from_secs(2));
+            
+            let mut i = 0u64;
+            loop {
+                timer.tick().await;
+
+                let active = signal(&cx.keyed(i), || *FAHRT_STATE == FahrtStatus::Active);
+                i += 1;
+                
+                let token = emit!{
+                    <div :hidden=$(!active.get())>
+                        <button 
+                            @click=$(async |_event: Event| {
+                                active.set(false);
+                                toggle_fahrt().await;
+                            })
+                        >
+                            "Fahrt beenden"
+                        </button>
+                    </div>
+                    <div :hidden=$(active.get())>
+                        <button 
+                            @click=$(async |_event: Event| {
+                                active.set(true);
+                                toggle_fahrt().await;
+                            })
+                        >   
+                            "Fahrt starten"
+                        </button>
+                    </div>
+                }?;
+                
+                if !connected(cx) {
+                    break Ok(token);
+                }
+            }
+        })
+    })
+}
+
+#[procedure("/api/toggle_fahrt")]
+async fn toggle_fahrt() -> Result<()> {
+    FAHRT_STATE.modify(|s| {
+        *s = match *s {
+            FahrtStatus::Active => FahrtStatus::Inactive,
+            FahrtStatus::Inactive => FahrtStatus::Active,
+        }
+    });
+    Ok(())
 }

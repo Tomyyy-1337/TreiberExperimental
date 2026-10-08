@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use tokio::{io::{AsyncReadExt, AsyncSeekExt}, runtime::LocalOptions, task};
-use topcoat::router::{RouterBuilderDirectoryExt, StripPrefixLayer, tower::{TowerLayer, TowerRoute}};
+use topcoat::router::{RouterBuilderDirectoryExt, StripPrefixLayer, TrailingSlash::Serve, tower::{TowerLayer, TowerRoute}};
 use topcoat::router::response::Response;
 use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, context::Cx, cookie::RouterBuilderCookieExt, router::{header::{ACCEPT_RANGES, CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, RANGE}, Body, Compression, CompressionLevel, Method, RouteFn, RouteFuture, Router, RouterBuilderDiscoverExt, StatusCode}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
 use tower_http::services::ServeDir;
@@ -31,6 +31,16 @@ static GPS_STATE: Global<GpsState> = Global::new(
     GpsState {
         satellite_count: 0,
     }
+);
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum FahrtStatus {
+    Active,
+    Inactive,
+}
+
+static FAHRT_STATE: Global<FahrtStatus> = Global::new(
+    FahrtStatus::Inactive,
 );
 
 fn main() {
@@ -92,11 +102,12 @@ fn main() {
                     )
                     .runtime()
                     .prefetch(PrefetchMode::Never)
-                    .serve_dir("/static/{*file}", "static/public")
+                    // Tower for precompressed static files
+                    .layer(StripPrefixLayer::new("/static"))
+                    .route(TowerRoute::any("/static/{*file}", ServeDir::new("static/public").precompressed_gzip()))
                     // Tower for serving map files as range requests (topcoat does not support range requests in v0.10.0)
                     .layer(StripPrefixLayer::new("/maps"))
                     .route(TowerRoute::any("/maps/{*file}", ServeDir::new("maps")))
-                    // .origin_policy(OriginPolicy::dangerous_disable())
                     .build()
             )
             .await
@@ -112,6 +123,6 @@ async fn increment_counter() {
         GPS_STATE.modify(|state| {
             state.satellite_count = (state.satellite_count + 1) % 13;
         });
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(700)).await;
     }
 }
