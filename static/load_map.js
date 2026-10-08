@@ -5,6 +5,8 @@ let pmtilesModulePromise;
 let availableMapsPromise;
 let shouldLoadMap = isMapRoute(window.location.href);
 let pendingPath;
+let pendingElement;
+let pendingMapSignature;
 let navigationVersion = 0;
 let loadingElement;
 let themeObserver;
@@ -83,6 +85,7 @@ function isMapRoute(href) {
 }
 
 const getMapElement = () => document.querySelector('[id^="map"]');
+const getMapSignature = (element) => element && `${element.id}:${element.getAttribute('gps_data') ?? ''}`;
 
 const loadWaypointPath = async () => {
     if (!mapElement || !map) return;
@@ -169,19 +172,23 @@ const syncMap = () => {
     const element = getMapElement();
     const onMapRoute = isMapRoute(window.location.href);
     const onPendingRoute = !pendingPath || window.location.pathname === pendingPath;
+    const hasRenderedPendingRoute = !pendingElement || pendingElement !== element || pendingMapSignature !== getMapSignature(element);
 
     if (!shouldLoadMap || !onMapRoute || (mapElement && mapElement !== element)) {
         destroyMap();
     }
 
-    if (shouldLoadMap && onMapRoute && onPendingRoute && !map && !loadingElement && element) {
+    if (shouldLoadMap && onMapRoute && onPendingRoute && hasRenderedPendingRoute && !map && !loadingElement && element) {
         loadMap(element, navigationVersion);
     }
 };
 
 const syncAfterNavigation = () => {
-    if (!pendingPath || window.location.pathname === pendingPath) {
+    const element = getMapElement();
+    if ((!pendingPath || window.location.pathname === pendingPath) && (!pendingElement || pendingElement !== element || pendingMapSignature !== getMapSignature(element))) {
         pendingPath = undefined;
+        pendingElement = undefined;
+        pendingMapSignature = undefined;
         syncMap();
         return;
     }
@@ -195,12 +202,26 @@ window.addEventListener('click', (event) => {
         return;
     }
 
+    pendingElement = getMapElement();
+    pendingMapSignature = getMapSignature(pendingElement);
     navigationVersion += 1;
     destroyMap();
 
     const url = new URL(link.href, window.location.href);
     shouldLoadMap = isMapRoute(url.href);
     pendingPath = url.pathname;
+
+    requestAnimationFrame(syncAfterNavigation);
+});
+
+window.addEventListener('popstate', () => {
+    pendingElement = getMapElement();
+    pendingMapSignature = getMapSignature(pendingElement);
+    navigationVersion += 1;
+    destroyMap();
+
+    shouldLoadMap = isMapRoute(window.location.href);
+    pendingPath = window.location.pathname;
 
     requestAnimationFrame(syncAfterNavigation);
 });
