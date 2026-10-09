@@ -44,7 +44,7 @@ async fn theme_settings(cx: &Cx) -> Result<impl View> {
 
     const THEME_OPTIONS: [(&str, &str); 2] = [
         ("light", "Light"),
-        ("dark", "Dark"),
+        ("dark", "Dark")
     ];
 
     Ok(view! {
@@ -59,7 +59,7 @@ async fn theme_settings(cx: &Cx) -> Result<impl View> {
                     @change=$(async |event: Event| {
                         let _new_theme = event.target.value;
                         raw!(
-                        "document.documentElement.className = ${_new_theme};
+                            "document.documentElement.className = ${_new_theme};
                             document.cookie = 'theme=' + ${_new_theme} + '; path=/; expires=' + new Date(Date.now() + 356 * 24 * 60 * 60 * 1000).toUTCString();"
                         );
                     })

@@ -7,7 +7,9 @@ const PUBLIC_ASSETS: &[&str] = &[
 ];
 
 fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=styles.css");
+    println!("cargo:rerun-if-changed=src");
+    
     download_public_assets().expect("failed to download static public assets");
     topcoat::tailwind::BuildConfig::new().input("styles.css").render().unwrap();
 }

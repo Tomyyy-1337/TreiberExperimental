@@ -1,1 +1,1 @@
-console.log('Test Plugin: script executed');
+console.log('Plugin loaded');

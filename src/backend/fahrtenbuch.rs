@@ -1,5 +1,5 @@
-use std::{collections::VecDeque, time::Duration};
 use serde::Serialize;
+use std::{collections::VecDeque, time::Duration};
 use tokio::time::Instant;
 
 use crate::global::Global;
@@ -56,7 +56,6 @@ impl ActiveFahrt {
     }
 }
 
-
 pub struct Fahrtenbuch {
     pub next_id: u32,
     pub entries: VecDeque<Indexed<FinishedFahrt>>,
@@ -91,7 +90,10 @@ impl Fahrtenbuch {
     }
 
     pub fn get(&self, id: u32) -> Option<&FinishedFahrt> {
-        self.entries.iter().find(|entry| entry.id == id).map(|indexed| &indexed.entry)
+        self.entries
+            .iter()
+            .find(|entry| entry.id == id)
+            .map(|indexed| &indexed.entry)
     }
 
     pub fn get_id_of_next(&self, id: u32) -> Option<u32> {
@@ -116,7 +118,7 @@ impl Fahrtenbuch {
     }
 
     pub fn add_entry(&mut self, entry: FinishedFahrt) {
-        let entry = Indexed::<FinishedFahrt> { 
+        let entry = Indexed::<FinishedFahrt> {
             id: self.next_id,
             entry,
         };

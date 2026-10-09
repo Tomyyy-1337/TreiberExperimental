@@ -1,7 +1,16 @@
 use std::str::FromStr;
 
-use topcoat::{Result, context::Cx, router::page, runtime::{Event, Signal, procedure, signal}, view::{Attributes, View, attributes, component, view}};
-use crate::{backend::camera_interface::{CAMERA_INTERFACE, FocusMode, Metering}, frontend::settings_subpages::settings_wrapper::settings_wrapper};
+use crate::{
+    backend::camera_interface::{CAMERA_INTERFACE, FocusMode, Metering},
+    frontend::settings_subpages::settings_wrapper::settings_wrapper,
+};
+use topcoat::{
+    Result,
+    context::Cx,
+    router::page,
+    runtime::{Event, Signal, procedure, signal},
+    view::{Attributes, View, attributes, component, view},
+};
 
 #[page("/settings/camera")]
 pub async fn settings_camera_page() -> Result<impl View> {
@@ -39,14 +48,14 @@ async fn select_widget<T: ToString + Send + Sync + PartialEq + 'static>(
     title: &str,
     possible_values: &[(T, &str)],
     selected: T,
-    on_select: Attributes
+    on_select: Attributes,
 ) -> Result<impl View> {
     Ok(view! {
         <label class="grid min-w-0 gap-1 rounded-lg border border-border bg-card p-2.5 transition-colors has-[:focus-visible]:border-ring">
             <span class="block text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground"> (title) </span>
-            <select 
-                (on_select) 
-                name=(format!("{}_select", title.split_whitespace().map(|s| s.to_lowercase()).collect::<Vec<_>>().join("_"))) 
+            <select
+                (on_select)
+                name=(format!("{}_select", title.split_whitespace().map(|s| s.to_lowercase()).collect::<Vec<_>>().join("_")))
                 class="select-arrow h-10 w-full cursor-pointer rounded-md border border-border bg-card px-2.5 pr-8 text-sm text-card-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/20"
             >
                 for (value, label) in possible_values.iter() {
@@ -63,11 +72,7 @@ async fn select_widget<T: ToString + Send + Sync + PartialEq + 'static>(
 
 #[component]
 async fn focal_length() -> Result<impl View> {
-    const OPTIONS: [(u8, &str); 3] = [
-        (28, "28 mm"),
-        (35, "35 mm"),
-        (42, "42 mm"),
-    ];
+    const OPTIONS: [(u8, &str); 3] = [(28, "28 mm"), (35, "35 mm"), (42, "42 mm")];
 
     let on_select = attributes! {
         @change=$(async |event: Event| {
@@ -81,7 +86,7 @@ async fn focal_length() -> Result<impl View> {
             possible_values: &OPTIONS,
             selected: CAMERA_INTERFACE.focal_length,
             on_select: on_select,
-        )   
+        )
     })
 }
 
@@ -93,13 +98,10 @@ async fn set_focal_length(value: String) -> Result<()> {
     Ok(())
 }
 
-
 #[component]
 async fn metering_mode_settings() -> Result<impl View> {
-    const OPTIONS: [(Metering, &str); 2] = [
-        (Metering::Average, "Average"),
-        (Metering::Center, "Center"),
-    ];
+    const OPTIONS: [(Metering, &str); 2] =
+        [(Metering::Average, "Average"), (Metering::Center, "Center")];
 
     let on_select = attributes! {
         @change=$(async |event: Event| {
@@ -121,16 +123,17 @@ async fn metering_mode_settings() -> Result<impl View> {
 async fn set_metering_mode(value: String) -> Result<()> {
     let metering_mode = Metering::from_str(&value).unwrap_or(Metering::Average);
     CAMERA_INTERFACE.modify_and_send(|s| s.metering_mode = metering_mode);
-    println!("Metering mode set to: {}", CAMERA_INTERFACE.metering_mode.to_string());
+    println!(
+        "Metering mode set to: {}",
+        CAMERA_INTERFACE.metering_mode.to_string()
+    );
     Ok(())
 }
 
 #[component]
 async fn focus_mode_settings() -> Result<impl View> {
-    const OPTIONS: [(FocusMode, &str); 2] = [
-        (FocusMode::Auto, "Auto"),
-        (FocusMode::Fixed, "Manual"),
-    ];
+    const OPTIONS: [(FocusMode, &str); 2] =
+        [(FocusMode::Auto, "Auto"), (FocusMode::Fixed, "Manual")];
 
     let on_select = attributes! {
         @change=$(async |event: Event| {
@@ -152,10 +155,12 @@ async fn focus_mode_settings() -> Result<impl View> {
 async fn set_focus_mode(value: String) -> Result<()> {
     let focus_mode = FocusMode::from_str(&value).unwrap_or(FocusMode::Fixed);
     CAMERA_INTERFACE.modify_and_send(|s| s.focus_mode = focus_mode);
-    println!("Focus mode set to: {}", CAMERA_INTERFACE.focus_mode.to_string());
+    println!(
+        "Focus mode set to: {}",
+        CAMERA_INTERFACE.focus_mode.to_string()
+    );
     Ok(())
 }
-
 
 #[component]
 async fn bitrate_settings() -> Result<impl View> {
@@ -210,13 +215,15 @@ async fn hdr_settings(hdr_enabled: &Signal<bool>) -> Result<impl View> {
                 })
             />
             <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-ring" aria-hidden="true"></span>
-        </label> 
+        </label>
     })
 }
 
 #[procedure("/api/toggle_hdr")]
 async fn toggle_hdr() -> Result<bool> {
-    CAMERA_INTERFACE.modify_and_send(|camera_interface| camera_interface.hdr_enabled = !camera_interface.hdr_enabled);
+    CAMERA_INTERFACE.modify_and_send(|camera_interface| {
+        camera_interface.hdr_enabled = !camera_interface.hdr_enabled
+    });
     println!("HDR set to: {}", CAMERA_INTERFACE.hdr_enabled);
     Ok(CAMERA_INTERFACE.hdr_enabled)
 }
@@ -231,7 +238,7 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
                 <span class="text-sm font-medium">"Auto Level"</span>
                 <small class="text-[0.68rem] leading-none text-muted-foreground">$(if auto_level_enabled.get() {"Aktiv"} else {"Aus"})</small>
             </span>
-            <input 
+            <input
                 class="peer sr-only"
                 name="camera-auto-level"
                 type="checkbox"
@@ -239,7 +246,7 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
                 @click=$(async |_event: Event| {
                     auto_level_enabled.set(!auto_level_enabled.get());
                 })
-            />  
+            />
             <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-ring" aria-hidden="true"></span>
         </label>
     })
@@ -247,9 +254,13 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
 
 #[component]
 async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl View> {
-    let exposure_signal: Signal<String> = signal(cx, || format!("{:.1}", CAMERA_INTERFACE.exposure_compenstion));
-    
-    const EXPOSURE_LABELS: [&str; 13] = ["-3", "", "-2", "", "-1", "", "0", "", "+1", "", "+2", "", "+3"];
+    let exposure_signal: Signal<String> = signal(cx, || {
+        format!("{:.1}", CAMERA_INTERFACE.exposure_compenstion)
+    });
+
+    const EXPOSURE_LABELS: [&str; 13] = [
+        "-3", "", "-2", "", "-1", "", "0", "", "+1", "", "+2", "", "+3",
+    ];
 
     Ok(view! {
         <div :hidden=$(hdr_enabled.get())>

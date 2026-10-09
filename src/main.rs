@@ -12,6 +12,7 @@ use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 use tower_http::services::ServeDir;
 use tower::ServiceBuilder;
 
+use crate::backend::plugins::PLUGINS;
 use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, FinishedFahrt, GpsPosition}}, global::Global}; 
 
 struct BatteryState {
@@ -35,7 +36,6 @@ static GPS_STATE: Global<GpsState> = Global::new(
 );
 
 fn main() {
-
     FAHRTENBUCH.modify(|state| {
         for i in 0..20 {
             state.add_entry(
@@ -67,6 +67,9 @@ fn main() {
         }
     });
 
+    // Initial plugin load
+    PLUGINS.modify(|plugins| plugins.load() );
+
     tokio::runtime::Builder::new_current_thread()
         .max_blocking_threads(4)
         .enable_all()
@@ -75,7 +78,7 @@ fn main() {
         .block_on(async {
             // Sent initial Camera configuration to the camera
             tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
-            
+
             // Spawn backend Tasks
             task::spawn_local(increment_counter());
 
