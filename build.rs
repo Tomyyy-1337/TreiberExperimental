@@ -38,14 +38,21 @@ fn download_public_assets() -> Result<(), Box<dyn std::error::Error>> {
 
 fn compress_asset(asset_path: &PathBuf, filename: &str) -> Result<(), Box<dyn std::error::Error>> {
     let gzip_path = asset_path.with_file_name(format!("{filename}.gz"));
-    if gzip_path.exists() {
-        return Ok(());
+    if !gzip_path.exists() {
+        println!("cargo:warning=Compressing {filename} with maximum gzip compression");
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::best());
+        encoder.write_all(&fs::read(asset_path)?)?;
+        fs::write(gzip_path, encoder.finish()?)?;
     }
 
-    println!("cargo:warning=Compressing {filename} with maximum gzip compression");
-    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::best());
-    encoder.write_all(&fs::read(asset_path)?)?;
-    fs::write(gzip_path, encoder.finish()?)?;
+    let brotli_path = asset_path.with_file_name(format!("{filename}.br"));
+    if !brotli_path.exists() {
+        println!("cargo:warning=Compressing {filename} with maximum Brotli compression");
+        let mut encoder = brotli::CompressorWriter::new(Vec::new(), 4096, 11, 22);
+        encoder.write_all(&fs::read(asset_path)?)?;
+        encoder.flush()?;
+        fs::write(brotli_path, encoder.into_inner())?;
+    }
 
     Ok(())
 }

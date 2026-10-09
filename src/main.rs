@@ -93,7 +93,7 @@ fn main() {
                     .prefetch(PrefetchMode::Never)
                     // Tower for precompressed static files
                     .layer(StripPrefixLayer::new("/static"))
-                    .route(TowerRoute::any("/static/{*file}", ServeDir::new("static/public").precompressed_gzip()))
+                    .route(TowerRoute::any("/static/{*file}", ServeDir::new("static/public").precompressed_gzip().precompressed_br()))
                     // Tower for serving map files as range requests (topcoat does not support range requests in v0.10.0)
                     .layer(StripPrefixLayer::new("/maps"))
                     .route(TowerRoute::any("/maps/{*file}", ServeDir::new("maps")))

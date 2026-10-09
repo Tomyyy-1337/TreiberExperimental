@@ -15,3 +15,4 @@ topcoat = { version = "0.10.0", features = ["asset", "fs", "runtime", "websocket
 topcoat = { version = "0.10.0", default-features = false, features = ["tailwind"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["blocking", "rustls"] }
 flate2 = "1.1.10"
+brotli = "9.0.0"
