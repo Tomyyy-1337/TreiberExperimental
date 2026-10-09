@@ -1,4 +1,4 @@
-use topcoat::{Result, context::Cx, router::href, runtime::link, view::{Child, View, attributes, class, component, view}};
+use topcoat::{Result, context::Cx, router::href, runtime::link, view::{Child, StaticClass, View, attributes, class, component, view}};
 
 use crate::frontend::{icons::{battery_status::battery_status, satelite_status::satelite_status}, pages::{fahrtenbuch_page::fahrtenbuch_page, settings_page::settings_page, stream_page::camera_page}};
 
@@ -26,7 +26,7 @@ pub async fn nav_layout(child: Child<'_>) -> Result<impl View> {
 
 #[component]
 async fn navbar(cx: &Cx) -> Result<impl View> {
-    const LINK_STYLING: &str = "z-10 flex h-11 min-w-[120px] items-center justify-center whitespace-nowrap rounded-xl px-4 text-center text-base font-semibold text-foreground no-underline transition-colors duration-300 ease-in-out";
+    const LINK_STYLING: StaticClass = class!("z-10 flex h-11 min-w-[120px] items-center justify-center whitespace-nowrap rounded-xl px-4 text-center text-base font-semibold text-foreground no-underline transition-colors duration-300 ease-in-out");
     
     Ok(view! {
         let camera_link = href!(camera_page);

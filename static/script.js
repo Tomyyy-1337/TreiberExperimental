@@ -1,3 +1,42 @@
+const currentUrl = () => `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+const matchesTarget = (url, targetPattern) => {
+    if (targetPattern instanceof RegExp) {
+        targetPattern.lastIndex = 0;
+        return targetPattern.test(url);
+    }
+
+    return targetPattern(new URL(url, window.location.origin));
+};
+
+const reloadWhenUrlMatches = (targetPattern, reload = () => window.location.reload(), onNavigation = () => {}) => {
+    let previousUrl = currentUrl();
+    let reloadRequested = false;
+
+    const checkUrl = () => {
+        const nextUrl = currentUrl();
+        if (nextUrl === previousUrl) return false;
+
+        previousUrl = nextUrl;
+        if (reloadRequested || !matchesTarget(nextUrl, targetPattern)) return false;
+
+        reloadRequested = true;
+        reload();
+        return true;
+    };
+
+    window.addEventListener('popstate', () => {
+        onNavigation();
+        checkUrl();
+    });
+    window.addEventListener('hashchange', checkUrl);
+    window.addEventListener('click', (event) => {
+        if (event.target.closest?.('a')) onNavigation();
+    });
+
+    return checkUrl;
+};
+
 let map;
 let mapElement;
 let mapModulePromise;
@@ -9,7 +48,6 @@ let navigationVersion = 0;
 let loadingElement;
 let themeObserver;
 
-const PMTILES_MAGIC_NUMBER = 19792;
 let currentPmtilesFiles = [];
 let pmtilesProtocolRegistered = false;
 
@@ -148,9 +186,7 @@ const loadMap = async (element, version) => {
     loadingElement = undefined;
     map = new maplibregl.Map({
         container: element,
-        style: {
-            ...buildMapStyle(baseUrl, validFiles, document.documentElement.className),
-        },
+        style: buildMapStyle(baseUrl, validFiles, document.documentElement.className),
         center: [10, 51],
         zoom: 4,
         attributionControl: false
@@ -186,26 +222,11 @@ const syncAfterNavigation = () => {
     requestAnimationFrame(syncAfterNavigation);
 };
 
-window.addEventListener('click', (event) => {
-    const link = event.target.closest?.('a');
-    if (!link) {
-        return;
-    }
-
+reloadWhenUrlMatches(/^\/fahrtenbuch\/[^/]+(?:[?#].*)?$/, undefined, () => {
     pendingElement = getMapElement();
     pendingMapSignature = getMapSignature(pendingElement);
     navigationVersion += 1;
     destroyMap();
-
-    requestAnimationFrame(syncAfterNavigation);
-});
-
-window.addEventListener('popstate', () => {
-    pendingElement = getMapElement();
-    pendingMapSignature = getMapSignature(pendingElement);
-    navigationVersion += 1;
-    destroyMap();
-
     requestAnimationFrame(syncAfterNavigation);
 });
 

@@ -19,7 +19,7 @@ pub async fn camera_page() -> Result<impl View> {
     })
 }
 
-const MEDIAMTX_WEBRTC_URL: &str = "http://localhost:8889/camera/whep";
+const MEDIAMTX_WEBRTC_URL: &str = "http://192.168.50.1:8889/stream/whep";
 
 #[component]
 async fn stream_player() -> Result<impl View> {

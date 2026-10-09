@@ -32,10 +32,10 @@ async fn title_card(post_id: u32, entry: &FinishedFahrt) -> Result<impl View> {
     let previous_id = FAHRTENBUCH.get_id_of_previous(post_id);
 
     Ok(view! {
-        <section class="my-2 grid gap-4 rounded-2xl border border-border bg-card p-4">
+        <section class="grid gap-4 rounded-2xl border border-border bg-card p-4">
             <div class="flex items-start justify-between gap-4">
                 <div class="grid gap-1">
-                    <span class="text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">"Fahrt am"</span>
+                    <span class="text-[0.66rem] font-bold uppercase tracking-widest text-muted-foreground">"Fahrt am"</span>
                     <h2 class="text-xl font-semibold tracking-tight text-card-foreground">( &entry.start_time )</h2>
                 </div>
                 link(
