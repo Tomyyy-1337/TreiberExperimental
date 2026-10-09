@@ -98,15 +98,13 @@ fn main() {
                     .route(TowerRoute::any("/static/{*file}", ServeDir::new("static/public").precompressed_gzip().precompressed_br()))
                     // Tower for serving plugin files
                     .layer(StripPrefixLayer::new("/plugins"))
-                    .route(TowerRoute::any(
-                        "/plugins/{*file}",
+                    .route(TowerRoute::any("/plugins/{*file}",
                         ServiceBuilder::new()
-                            .layer(
-                                CompressionLayer::new()
-                                    .gzip(true)
-                                    .br(false)
-                                    .quality(tower_http::CompressionLevel::Default)
-                                    .compress_when(SizeAbove::new(1024)),
+                            .layer(CompressionLayer::new()
+                                .gzip(true) 
+                                .br(false)
+                                .quality(tower_http::CompressionLevel::Default)
+                                .compress_when(SizeAbove::new(1024))
                             )
                             .service(ServeDir::new("plugins")),
                     ))
