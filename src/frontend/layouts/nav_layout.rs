@@ -5,11 +5,11 @@ use crate::frontend::{icons::{battery_status::battery_status, satelite_status::s
 #[component]
 pub async fn nav_layout(child: Child<'_>) -> Result<impl View> {
     Ok(view! {
-        <section class="my-4 grid grid-cols-3 items-center rounded-2xl border border-border bg-card p-4">
+        <section class="grid grid-cols-3 items-center rounded-2xl border border-border bg-card p-4">
             <div class="justify-self-start">
                 battery_status()
             </div>
-            <h1 class="whitespace-nowrap text-center text-xl font-semibold tracking-tight"> "Ruder Cam Beta" </h1>
+            <h1 id="main-title" class="whitespace-nowrap text-center text-xl font-semibold tracking-tight"> "Ruder Cam Beta" </h1>
             <div class="justify-self-end">
                 satelite_status()
             </div>
@@ -26,7 +26,7 @@ pub async fn nav_layout(child: Child<'_>) -> Result<impl View> {
 
 #[component]
 async fn navbar(cx: &Cx) -> Result<impl View> {
-    const LINK_STYLING: &str = "z-10 flex h-11 min-w-[120px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-center text-base font-semibold text-foreground no-underline transition-colors duration-300 ease-in-out";
+    const LINK_STYLING: &str = "z-10 flex h-11 min-w-[120px] items-center justify-center whitespace-nowrap rounded-xl px-4 text-center text-base font-semibold text-foreground no-underline transition-colors duration-300 ease-in-out";
     
     Ok(view! {
         let camera_link = href!(camera_page);

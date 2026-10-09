@@ -32,7 +32,7 @@ pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
         </head>
         <html class=(theme_cookie.as_ref().map(|c| c.value()).unwrap_or("dark"))>
             <body class="min-h-screen bg-background text-foreground antialiased">
-                <main class="mx-auto w-full max-w-4xl px-2">
+                <main class="mx-auto w-full max-w-4xl px-2 py-2">
                     (slot)
                 </main>
             </body>
