@@ -6,9 +6,11 @@ use std::time::Duration;
 
 use tokio::{runtime::LocalOptions, task};
 use topcoat::router::tower::TowerRoute;
-use topcoat::router::{StripPrefixLayer};
-use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
+use topcoat::router::{Compression, StripPrefixLayer};
+use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
+use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 use tower_http::services::ServeDir;
+use tower::ServiceBuilder;
 
 use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, FinishedFahrt, GpsPosition}}, global::Global}; 
 
@@ -86,7 +88,7 @@ fn main() {
                     .compression(
                         Compression::new()
                             .brotli(false)
-                            .level(CompressionLevel::Balanced)
+                            .level(topcoat::router::CompressionLevel::Balanced)
                             .min_size(1024)
                     )
                     .runtime()
@@ -96,7 +98,18 @@ fn main() {
                     .route(TowerRoute::any("/static/{*file}", ServeDir::new("static/public").precompressed_gzip().precompressed_br()))
                     // Tower for serving plugin files
                     .layer(StripPrefixLayer::new("/plugins"))
-                    .route(TowerRoute::any("/plugins/{*file}", ServeDir::new("plugins")))
+                    .route(TowerRoute::any(
+                        "/plugins/{*file}",
+                        ServiceBuilder::new()
+                            .layer(
+                                CompressionLayer::new()
+                                    .gzip(true)
+                                    .br(false)
+                                    .quality(tower_http::CompressionLevel::Default)
+                                    .compress_when(SizeAbove::new(1024)),
+                            )
+                            .service(ServeDir::new("plugins")),
+                    ))
                     // Tower for serving map files as range requests (topcoat does not support range requests in v0.10.0)
                     .layer(StripPrefixLayer::new("/maps"))
                     .route(TowerRoute::any("/maps/{*file}", ServeDir::new("maps")))
