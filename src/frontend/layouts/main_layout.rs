@@ -1,14 +1,10 @@
 use topcoat::{
-    Result,
-    context::Cx,
-    cookie::{Cookies, cookies},
-    router::{Slot, layout},
-    view::{View, view},
+    Result, asset::{Asset, asset}, context::Cx, cookie::{Cookies, cookies}, router::{Slot, layout}, view::{View, view},
 };
 
 use crate::PLUGINS;
 
-pub const SCRIPT: &str = "/static/script.js";
+pub const SCRIPT: Asset = asset!("../../../static/script.js");
 
 #[layout("/")]
 pub async fn main_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {

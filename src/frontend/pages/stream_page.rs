@@ -14,7 +14,7 @@ pub async fn camera_page() -> Result<impl View> {
                 settings_camera_component()
             )
 
-            fahrt_steuerung()
+            live_fahrt_button()
         )
     })
 }
@@ -39,7 +39,7 @@ async fn stream_player() -> Result<impl View> {
 #[component]
 async fn collapsable_section(title: &str, child: Child<'_>) -> Result<impl View> {
     Ok(view! {
-        <details class="my-4 rounded-2xl border-1 border-border bg-card [interpolate-size:allow-keywords] [&::details-content]:[block-size:0] [&::details-content]:overflow-hidden [&::details-content]:opacity-0 [&::details-content]:transition-all [&::details-content]:duration-300 [&::details-content]:ease-in-out [&::details-content]:[transition-behavior:allow-discrete] open:[&::details-content]:[block-size:auto] open:[&::details-content]:opacity-100">
+        <details class="my-4 rounded-2xl border border-border bg-card [interpolate-size:allow-keywords] details-content:[block-size:0] details-content:overflow-hidden details-content:opacity-0 details-content:transition-all details-content:duration-300 details-content:ease-in-out details-content:transition-discrete open:details-content:[block-size:auto] open:details-content:opacity-100">
             <summary class="cursor-pointer p-4 text-lg font-semibold"> 
                 (title) 
             </summary>
@@ -51,52 +51,76 @@ async fn collapsable_section(title: &str, child: Child<'_>) -> Result<impl View>
 }
 
 #[component]
-async fn fahrt_steuerung(cx: &Cx) -> Result<impl View> {    
+async fn fahrt_steuerung() -> Result<impl View> {    
     Ok(view! {
-        <p> "Fahrt Steuerung"</p>
-        
-        (live! {
-            let mut timer = tokio::time::interval(std::time::Duration::from_secs(2));
-            
-            let mut i = 0u64;
-            loop {
-                timer.tick().await;
+        <section class="my-4 rounded-2xl border border-border bg-card p-2">
+            live_fahrt_button()
 
-                let active = signal(&cx.keyed(i), || FAHRT_STATE.is_active());
-                i += 1;
-                
+            <div>
+                <span> "Dauer" </span>
+                <span> "00:00:00" </span>
+                <span> "km" </span>
+            </div>
+            <div>
+                <span> "Distanz" </span>
+                <span> "0" </span>
+                <span> "km/h" </span>
+            </div>
+        </section>
+    })
+}
+
+#[component]
+async fn live_fahrt_button(cx: &Cx) -> Result<impl View> {    
+    Ok(live! {
+        let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+        let mut i = 0u64;
+        let mut previous_state: Option<bool> = None;
+        loop {
+            timer.tick().await;
+
+            if previous_state != Some(FAHRT_STATE.is_active()) || previous_state.is_none() {
                 let token = emit!{
-                    <div :hidden=$(!active.get())>
-                        <button 
-                            @click=$(async |_event: Event| {
-                                active.set(false);
-                                stop_fahrt().await;
-                            })
-                        >
-                            "Fahrt beenden"
-                        </button>
-                    </div>
-                    <div :hidden=$(active.get())>
-                        <button 
-                            @click=$(async |_event: Event| {
-                                active.set(true);
-                                let current_time = raw!(
-                                    "new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })",
-                                    "Current time".to_string()
-                                );
-                                start_fahrt(current_time).await;
-                            })
-                        >   
-                            "Fahrt starten"
-                        </button>
-                    </div>
+                    fahrt_button(key: i)
                 }?;
-                
+                i += 1;
                 if !connected(cx) {
                     break Ok(token);
                 }
             }
-        })
+            previous_state = Some(FAHRT_STATE.is_active());
+        }    
+    })
+}
+
+#[component]
+async fn fahrt_button(cx: &Cx, key: u64) -> Result<impl View> {
+    let active = signal(&cx.keyed(key), || FAHRT_STATE.is_active());
+    Ok(view! {
+        <div :hidden=$(!active.get())>
+            <button 
+                @click=$(async |_event: Event| {
+                    active.set(false);
+                    stop_fahrt().await;
+                })
+            >
+                "Fahrt beenden"
+            </button>
+        </div>
+        <div :hidden=$(active.get())>
+            <button 
+                @click=$(async |_event: Event| {
+                    active.set(true);
+                    let current_time = raw!(
+                        "new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })",
+                        "Current time".to_string()
+                    );
+                    start_fahrt(current_time).await;
+                })
+            >   
+                "Fahrt starten"
+            </button>
+        </div>
     })
 }
 

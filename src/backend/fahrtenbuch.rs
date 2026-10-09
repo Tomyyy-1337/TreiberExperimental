@@ -75,6 +75,16 @@ pub struct FinishedFahrt {
     pub position_history: Vec<GpsPosition>,
 }
 
+// impl FinishedFahrt {
+//     pub fn average_split_time(&self) -> Option<Duration> {
+//         if self.strecke_km > 0.0 {
+//             Some(self.dauer / self.strecke_km as u32)
+//         } else {
+//             None
+//         }
+//     }
+// }
+
 #[derive(Clone, Copy, Serialize, Debug, PartialEq)]
 pub struct GpsPosition {
     pub latitude: f64,
