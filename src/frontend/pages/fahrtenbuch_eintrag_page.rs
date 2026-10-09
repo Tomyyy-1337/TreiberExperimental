@@ -34,9 +34,9 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
 
             if next_id.is_some() || previous_id.is_some() {
                 <div class="flex items-center justify-between border-t border-border pt-3">
-                    if let Some(previous_id) = previous_id {
+                    if let Some(next_id) = next_id {
                         link(
-                            href: href!(fahrtenbuch_eintrag, Id(previous_id)),
+                            href: href!(fahrtenbuch_eintrag, Id(next_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"),
                             prefetch: PrefetchMode::Never,
                             "Nächste Fahrt"
@@ -45,9 +45,9 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
                         <span></span>
                     }
 
-                    if let Some(next_id) = next_id {
+                    if let Some(previous_id) = previous_id {
                         link(
-                            href: href!(fahrtenbuch_eintrag, Id(next_id)),
+                            href: href!(fahrtenbuch_eintrag, Id(previous_id)),
                             attrs: attributes!(class="rounded-md px-2 py-1 text-sm font-semibold text-primary transition-colors hover:bg-background"), 
                             prefetch: PrefetchMode::Never,
                             "Vorherige Fahrt"
@@ -129,7 +129,8 @@ async fn delete_fahrtenbuch_entry(entry_id: u32) -> Result<()> {
 
 #[component]
 async fn map_component(id: u32) -> Result<impl View> {
-    let gps_data_json = serde_json::to_string(&FAHRTENBUCH.entries.iter().find(|entry| entry.id == id).ok_or_not_found()?.entry.position_history).unwrap();
+    let entry = &FAHRTENBUCH.entries.iter().find(|entry| entry.id == id).ok_or_not_found()?.entry;
+    let gps_data_json = serde_json::to_string(&entry.position_history).unwrap();
     let available_maps = std::fs::read_dir("./maps")?
         .filter_map(|entry| entry.ok())
         .filter_map(|entry| entry.file_name().into_string().ok())
@@ -138,12 +139,22 @@ async fn map_component(id: u32) -> Result<impl View> {
 
     Ok(view! {
         <section class="pointer-events-none my-4 overflow-hidden rounded-2xl bg-card [&_.maplibregl-canvas]:block border border-border">
-            <div 
-                id=(format!("map{}", id)) 
-                class="h-[400px] w-[calc(100%+1px)]"
-                gps_data=(gps_data_json)
-                available_maps=(available_maps_json)
-            ></div>
+            
+            if !entry.position_history.is_empty() {
+                <div 
+                    hidden=(entry.position_history.is_empty())
+                    id=(format!("map{}", id)) 
+                    class="h-[400px] w-[calc(100%+1px)]"
+                    gps_data=(gps_data_json)
+                    available_maps=(available_maps_json)
+                ></div>
+            } else {
+                <div 
+                    class="h-[400px] w-[calc(100%+1px)] flex items-center justify-center text-muted-foreground"
+                >
+                    "Keine GPS-Daten verfügbar."
+                </div>
+            }
         </section>
     })
 }

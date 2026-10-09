@@ -10,7 +10,7 @@ use topcoat::router::{StripPrefixLayer};
 use topcoat::{asset::{AssetBundle, RouterBuilderAssetExt}, cookie::RouterBuilderCookieExt, router::{Compression, CompressionLevel, Router, RouterBuilderDiscoverExt}, runtime::{PrefetchMode, RouterBuilderRuntimeExt}};
 use tower_http::services::ServeDir;
 
-use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, Fahrt, GpsPosition}}, global::Global}; 
+use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, FinishedFahrt, GpsPosition}}, global::Global}; 
 
 struct BatteryState {
     pub battery_percentage: u8,
@@ -32,22 +32,12 @@ static GPS_STATE: Global<GpsState> = Global::new(
     }
 );
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum FahrtStatus {
-    Active,
-    Inactive,
-}
-
-static FAHRT_STATE: Global<FahrtStatus> = Global::new(
-    FahrtStatus::Inactive,
-);
-
 fn main() {
-    // Add fake Fahrtenbuch entries
+
     FAHRTENBUCH.modify(|state| {
         for i in 0..20 {
             state.add_entry(
-                Fahrt {
+                FinishedFahrt {
                     start_time: format!("2024-06-{}", i + 1),
                     dauer: Duration::from_mins(i),
                     strecke_km: (i * 10) as f64,

@@ -1,6 +1,6 @@
 use topcoat::{Result, context::Cx, router::page, runtime::{Event, connected, procedure, signal}, view::{Child, View, component, emit, live, view}};
 
-use crate::{FAHRT_STATE, FahrtStatus, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
+use crate::{backend::fahrtenbuch::{FAHRT_STATE, FAHRTENBUCH, FahrtStatus}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
 
 #[page("/")]
 pub async fn camera_page() -> Result<impl View> {
@@ -62,7 +62,7 @@ async fn fahrt_steuerung(cx: &Cx) -> Result<impl View> {
             loop {
                 timer.tick().await;
 
-                let active = signal(&cx.keyed(i), || *FAHRT_STATE == FahrtStatus::Active);
+                let active = signal(&cx.keyed(i), || FAHRT_STATE.is_active());
                 i += 1;
                 
                 let token = emit!{
@@ -70,7 +70,7 @@ async fn fahrt_steuerung(cx: &Cx) -> Result<impl View> {
                         <button 
                             @click=$(async |_event: Event| {
                                 active.set(false);
-                                toggle_fahrt().await;
+                                stop_fahrt().await;
                             })
                         >
                             "Fahrt beenden"
@@ -80,7 +80,11 @@ async fn fahrt_steuerung(cx: &Cx) -> Result<impl View> {
                         <button 
                             @click=$(async |_event: Event| {
                                 active.set(true);
-                                toggle_fahrt().await;
+                                let current_time = raw!(
+                                    "new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })",
+                                    "Current time".to_string()
+                                );
+                                start_fahrt(current_time).await;
                             })
                         >   
                             "Fahrt starten"
@@ -96,13 +100,20 @@ async fn fahrt_steuerung(cx: &Cx) -> Result<impl View> {
     })
 }
 
-#[procedure("/api/toggle_fahrt")]
-async fn toggle_fahrt() -> Result<()> {
-    FAHRT_STATE.modify(|s| {
-        *s = match *s {
-            FahrtStatus::Active => FahrtStatus::Inactive,
-            FahrtStatus::Inactive => FahrtStatus::Active,
-        }
-    });
+#[procedure("/api/start_fahrt")]
+async fn start_fahrt(current_time: String) -> Result<()> {
+    FAHRT_STATE.set(FahrtStatus::new_active(current_time));
+    Ok(())
+}
+
+#[procedure("/api/stop_fahrt")]
+async fn stop_fahrt() -> Result<()> {
+    match FAHRT_STATE.replace(FahrtStatus::Inactive) {
+        FahrtStatus::Active(a) => {
+            let finished_fahrt = a.finish();
+            FAHRTENBUCH.modify(|f| f.add_entry(finished_fahrt));
+        },
+        FahrtStatus::Inactive => {},
+    }
     Ok(())
 }

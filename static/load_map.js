@@ -3,8 +3,6 @@ let mapElement;
 let mapModulePromise;
 let pmtilesModulePromise;
 let availableMapsPromise;
-let shouldLoadMap = isMapRoute(window.location.href);
-let pendingPath;
 let pendingElement;
 let pendingMapSignature;
 let navigationVersion = 0;
@@ -79,11 +77,6 @@ const applyThemeToMap = (theme) => {
     }
 };
 
-function isMapRoute(href) {
-    const url = new URL(href, window.location.href);
-    return url.origin === window.location.origin && /^\/fahrtenbuch\/[^/]+\/?$/.test(url.pathname);
-}
-
 const getMapElement = () => document.querySelector('[id^="map"]');
 const getMapSignature = (element) => element && `${element.id}:${element.getAttribute('gps_data') ?? ''}`;
 
@@ -137,7 +130,7 @@ const loadMap = async (element, version) => {
     const [maplibregl] = await Promise.all([mapModulePromise, loadPmtilesModule()]);
     const { baseUrl, validFiles } = await discoverPmtilesBaseUrl(element);
 
-    if (version !== navigationVersion || !shouldLoadMap || !element.isConnected || element !== getMapElement()) {
+    if (version !== navigationVersion || !element.isConnected || element !== getMapElement()) {
         if (loadingElement === element) {
             loadingElement = undefined;
         }
@@ -170,23 +163,20 @@ const loadMap = async (element, version) => {
 
 const syncMap = () => {
     const element = getMapElement();
-    const onMapRoute = isMapRoute(window.location.href);
-    const onPendingRoute = !pendingPath || window.location.pathname === pendingPath;
     const hasRenderedPendingRoute = !pendingElement || pendingElement !== element || pendingMapSignature !== getMapSignature(element);
 
-    if (!shouldLoadMap || !onMapRoute || (mapElement && mapElement !== element)) {
+    if (mapElement && mapElement !== element) {
         destroyMap();
     }
 
-    if (shouldLoadMap && onMapRoute && onPendingRoute && hasRenderedPendingRoute && !map && !loadingElement && element) {
+    if (hasRenderedPendingRoute && !map && !loadingElement && element) {
         loadMap(element, navigationVersion);
     }
 };
 
 const syncAfterNavigation = () => {
     const element = getMapElement();
-    if ((!pendingPath || window.location.pathname === pendingPath) && (!pendingElement || pendingElement !== element || pendingMapSignature !== getMapSignature(element))) {
-        pendingPath = undefined;
+    if (!pendingElement || pendingElement !== element || pendingMapSignature !== getMapSignature(element)) {
         pendingElement = undefined;
         pendingMapSignature = undefined;
         syncMap();
@@ -207,10 +197,6 @@ window.addEventListener('click', (event) => {
     navigationVersion += 1;
     destroyMap();
 
-    const url = new URL(link.href, window.location.href);
-    shouldLoadMap = isMapRoute(url.href);
-    pendingPath = url.pathname;
-
     requestAnimationFrame(syncAfterNavigation);
 });
 
@@ -219,9 +205,6 @@ window.addEventListener('popstate', () => {
     pendingMapSignature = getMapSignature(pendingElement);
     navigationVersion += 1;
     destroyMap();
-
-    shouldLoadMap = isMapRoute(window.location.href);
-    pendingPath = window.location.pathname;
 
     requestAnimationFrame(syncAfterNavigation);
 });

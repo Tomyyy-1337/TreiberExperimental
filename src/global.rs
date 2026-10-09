@@ -19,6 +19,11 @@ impl<T> Global<T> {
         let slot = unsafe { &mut *self.0.get() };
         *slot = value;
     }
+
+    pub fn replace(&self, value: T) -> T {
+        let slot = unsafe { &mut *self.0.get() };
+        std::mem::replace(slot, value)
+    }
 }
 
 impl<T> Global<Option<T>> {

@@ -1,5 +1,5 @@
 use topcoat::{Result, router::{href, page}, runtime::{PrefetchMode, link}, view::{View, attributes, component, view}};
-use crate::{backend::fahrtenbuch::{FAHRTENBUCH, Fahrt, IndexedFahrt}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{Id, fahrtenbuch_eintrag}}};
+use crate::{backend::fahrtenbuch::{FAHRTENBUCH, FinishedFahrt, Indexed}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{Id, fahrtenbuch_eintrag}}};
 
 #[page("/fahrtenbuch")]
 pub async fn fahrtenbuch_page() -> Result<impl View> { 
@@ -7,7 +7,7 @@ pub async fn fahrtenbuch_page() -> Result<impl View> {
         nav_layout(
             <div class="my-4 grid gap-3">
                 #[key(id)]
-                for IndexedFahrt { id, entry } in FAHRTENBUCH.entries.iter() {
+                for Indexed::<FinishedFahrt> { id, entry } in FAHRTENBUCH.entries.iter().rev() {
                     fahrtenbuch_eintragen(id: *id, entry: entry)
                 }
             </div>
@@ -16,7 +16,7 @@ pub async fn fahrtenbuch_page() -> Result<impl View> {
 }
 
 #[component]
-async fn fahrtenbuch_eintragen(id: u32, entry: &Fahrt) -> Result<impl View> {
+async fn fahrtenbuch_eintragen(id: u32, entry: &FinishedFahrt) -> Result<impl View> {
     let time_secs = entry.dauer.as_secs();
     let time_mins = time_secs / 60;
     
