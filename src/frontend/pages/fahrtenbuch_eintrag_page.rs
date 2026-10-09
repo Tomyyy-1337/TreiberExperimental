@@ -15,7 +15,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
     let löschen_bestätigen = signal(&cx.keyed(post_id), || false);
 
     Ok(view! {
-        <section class="my-4 grid gap-4 rounded-2xl border border-border bg-card p-4">
+        <section name="fahrtenbuch-entry" class="my-4 grid gap-4 rounded-2xl border border-border bg-card p-4">
             <div class="flex items-start justify-between gap-4">
                 <div class="grid gap-1">
                     <span class="text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">"Fahrt am"</span>

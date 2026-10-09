@@ -1,0 +1,1 @@
+console.log('Test Plugin: script executed');

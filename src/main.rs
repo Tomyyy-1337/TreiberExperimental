@@ -94,6 +94,9 @@ fn main() {
                     // Tower for precompressed static files
                     .layer(StripPrefixLayer::new("/static"))
                     .route(TowerRoute::any("/static/{*file}", ServeDir::new("static/public").precompressed_gzip().precompressed_br()))
+                    // Tower for serving plugin files
+                    .layer(StripPrefixLayer::new("/plugins"))
+                    .route(TowerRoute::any("/plugins/{*file}", ServeDir::new("plugins")))
                     // Tower for serving map files as range requests (topcoat does not support range requests in v0.10.0)
                     .layer(StripPrefixLayer::new("/maps"))
                     .route(TowerRoute::any("/maps/{*file}", ServeDir::new("maps")))
