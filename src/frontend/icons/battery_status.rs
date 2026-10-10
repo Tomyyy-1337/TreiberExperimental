@@ -20,7 +20,7 @@ pub async fn battery_status(cx: &Cx) -> Result<impl View> {
             };
 
             let token = emit! {
-                <div class=(class!("flex items-center gap-1 font-bold leading-none", color, "p-4"))>
+                <div class=(class!("flex items-center gap-1 font-bold leading-none", color))>
                     <svg class="block h-[1.1rem] w-[1.1rem] shrink-0 fill-none stroke-current" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                         <rect x="3" y="7" width="16" height="10" rx="2" />
                         <rect x="19" y="10" width="2" height="4" rx="1" />
