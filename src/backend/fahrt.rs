@@ -121,6 +121,10 @@ impl<D: FahrtDurationTrait> Fahrt<D> {
             None => invalid_placeholder.to_string(),
         }
     }
+
+    pub fn duration(&self) -> Duration {
+        self.timestamp.duration()
+    }
 }
 
 pub trait FahrtDurationTrait {
