@@ -12,7 +12,7 @@ use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 use tower_http::services::ServeDir;
 use tower::ServiceBuilder;
 
-use crate::backend::fahrt;
+use crate::backend::fahrt::{self, FahrtStatus};
 use crate::backend::fahrtenbuch::FAHRTENBUCH;
 use crate::backend::gps_interface::GpsPosition;
 use crate::backend::plugins::PLUGINS;
@@ -150,17 +150,17 @@ async fn update_fahrt_state(
     loop {
         timer.tick().await;
 
-        let GpsSatelites { count: satelites_count,.. } = *gps_satelites_receiver.borrow();
+        let GpsSatelites { count: _satelites_count,.. } = *gps_satelites_receiver.borrow();
         
         fahrt_sender.send_if_modified(|s| {
             match s {
-                fahrt::FahrtStatus::Active(a) => {
+                FahrtStatus::Active(a) => {
                     let GpsState { speed,.. } = *gps_state_receiver.borrow();
                     a.strecke_km += speed as f64 / 3600.0; 
 
                     true
                 }
-                _ => false
+                FahrtStatus::Inactive => false
             }
         });       
     }
