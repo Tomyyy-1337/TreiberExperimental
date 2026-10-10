@@ -26,7 +26,7 @@ pub async fn nav_layout(child: Child<'_>) -> Result<impl View> {
 
 #[component]
 async fn navbar(cx: &Cx) -> Result<impl View> {
-    const LINK_STYLING: StaticClass = class!("z-10 flex h-11 min-w-[120px] items-center justify-center whitespace-nowrap rounded-xl px-4 text-center text-base font-semibold text-foreground no-underline transition-colors duration-300 ease-in-out");
+    const LINK_STYLING: StaticClass = class!("z-10 flex h-11 min-w-30 items-center justify-center whitespace-nowrap rounded-xl px-4 text-center text-base font-semibold text-foreground no-underline transition-colors duration-300 ease-in-out");
     
     Ok(view! {
         let camera_link = href!(camera_page);

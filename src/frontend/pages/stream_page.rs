@@ -61,7 +61,7 @@ async fn fahrt_info(cx: &Cx) -> Result<impl View> {
                 FahrtStatus::Active(a) => (true, a.formated_duration_mm_ss(), a.formated_distance_km(2)),
                 _ => (false, "--:--".to_string(), "--.--".to_string())
             };
-
+ 
             let token = emit!{
                 <section class="my-4 rounded-2xl border border-border bg-card p-2">
                     fahrt_button(is_active: is_active)
