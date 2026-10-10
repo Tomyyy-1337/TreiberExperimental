@@ -2,6 +2,7 @@ pub mod global;
 mod frontend;
 mod backend;
 
+use tokio::sync::watch::{self, Receiver, Sender};
 use tokio::{runtime::LocalOptions, task};
 use topcoat::router::tower::TowerRoute;
 use topcoat::router::{Compression, StripPrefixLayer};
@@ -14,27 +15,16 @@ use crate::backend::fahrt;
 use crate::backend::fahrtenbuch::FAHRTENBUCH;
 use crate::backend::gps_interface::GpsPosition;
 use crate::backend::plugins::PLUGINS;
-use crate::{backend::{camera_interface::CAMERA_INTERFACE}, global::Global}; 
+use crate::{backend::{camera_interface::CAMERA_INTERFACE}}; 
 
+#[derive(Copy, Clone)]
 struct BatteryState {
     pub battery_percentage: u8,
 }
 
-static BATTERY_STATE: Global<BatteryState> = Global::new(
-    BatteryState {
-        battery_percentage: 0,
-    }
-);
-
 struct GpsState {
     pub satellite_count: u8,
 }
-
-static GPS_STATE: Global<GpsState> = Global::new(
-    GpsState {
-        satellite_count: 0,
-    }
-);
 
 fn main() {
     // Initial plugin load
@@ -58,15 +48,21 @@ fn main() {
         .build_local(LocalOptions::default())
         .unwrap()
         .block_on(async {
+            let (battery_sender, battery_receiver) = watch::channel(BatteryState { battery_percentage: 0 });
+            let (gps_sender, gps_receiver) = watch::channel(GpsState { satellite_count: 0 });
+
             // Sent initial Camera configuration to the camera
             tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
 
             // Spawn backend Tasks
-            task::spawn_local(increment_counter());
+            task::spawn_local(update_battery_state(battery_sender));
+            task::spawn_local(update_gps_state(gps_sender));
 
             // Start the web server
             topcoat::start(
                 Router::builder()
+                    .app_context::<Receiver<BatteryState>>(battery_receiver)
+                    .app_context::<Receiver<GpsState>>(gps_receiver)
                     .discover()
                     .cookies()
                     .assets(AssetBundle::load().unwrap())
@@ -103,14 +99,18 @@ fn main() {
         });
 }
 
-async fn increment_counter() {
+async fn update_battery_state(battery_sender: Sender<BatteryState>) {
     loop {
-        BATTERY_STATE.modify(|state| {
-            state.battery_percentage = (state.battery_percentage + 1) % 101;
-        });
-        GPS_STATE.modify(|state| {
-            state.satellite_count = (state.satellite_count + 1) % 13;
-        });
-        tokio::time::sleep(std::time::Duration::from_millis(700)).await;
+        battery_sender.send_modify(|s| s.battery_percentage = (s.battery_percentage + 1) % 101);
+
+        tokio::time::sleep(std::time::Duration::from_millis(2000)).await;
+    }
+}
+
+async fn update_gps_state(gps_sender: Sender<GpsState>) {
+    loop {
+        gps_sender.send_modify(|s| s.satellite_count += 1);
+
+        tokio::time::sleep(std::time::Duration::from_millis(10000)).await;
     }
 }
