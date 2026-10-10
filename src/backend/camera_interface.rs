@@ -1,19 +1,11 @@
-use std::{ops::Deref, str::FromStr, time::Duration};
+use std::{str::FromStr, time::Duration};
 
 use reqwest::Client;
 use serde::Serialize;
 
-use crate::global::Global;
-
-pub static CAMERA_INTERFACE: Global<CameraInterface> = Global::new(CameraInterface {
-    hdr_enabled: true,
-    exposure_compenstion: 0.0,
-    metering_mode: Metering::Average,
-    focus_mode: FocusMode::Fixed,
-    focal_length: 28,
-    bitrate: 3_200_000,
-    client: None
-});
+lazy_static::lazy_static! {
+    static ref CLIENT: Client = Client::builder().build().unwrap();
+}
 
 #[derive(Serialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Metering {
@@ -27,6 +19,7 @@ pub enum FocusMode {
     Fixed,
 }
 
+#[derive(Debug, Clone)]
 pub struct CameraInterface {
     pub hdr_enabled: bool,
     pub exposure_compenstion: f32,
@@ -34,40 +27,38 @@ pub struct CameraInterface {
     pub focus_mode: FocusMode,
     pub focal_length: u8,
     pub bitrate: u32,
-    client: Option<Client>,
-}
-
-impl Global<CameraInterface> {
-    pub fn modify_and_send<F>(&self, f: F)
-    where
-        F: FnOnce(&mut CameraInterface),
-    {
-        self.modify(|s| f(s));
-        
-        tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
-    }
-}
-
-impl Global<CameraInterface> {
-    pub async fn send_to_camera(&self) {
-        let client = match &self.client {
-            Some(c) => c,
-            None => {
-                let client = Client::builder().build().unwrap();
-                self.modify(|s| s.client = Some(client));
-                self.client.as_ref().unwrap()
-            }
-        };
-
-        let config: CameraConfig = CameraConfig::from(self.deref());
-
-        if let Err(_e) = internal_update_camera_config(&client, &config).await {
-            println!("Camera can not be updated");
-        }
-    }
 }
 
 impl CameraInterface {
+    pub fn new() -> Self {
+        CameraInterface {
+            hdr_enabled: true,
+            exposure_compenstion: 0.0,
+            metering_mode: Metering::Average,
+            focus_mode: FocusMode::Fixed,
+            focal_length: 28,
+            bitrate: 3_200_000,
+        }
+    }
+
+    pub async fn send_to_camera(&self) -> Result<(), reqwest::Error> {
+        let config = CameraConfig::from(self);
+
+        let response = CLIENT
+            .patch("http://127.0.0.1:9997/v3/config/paths/patch/stream")
+            .json(&config)
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let body = response.text().await.unwrap_or_default();
+            println!("API error: {status}: {body}");
+        }
+        Ok(())
+    }
+
     fn get_roi(&self) -> String {
         const BASE_FOCAL_LENGTH: f32 = 28.0;
         
@@ -142,26 +133,5 @@ impl FromStr for FocusMode {
             "manual" => Ok(FocusMode::Fixed),
             _ => Err(()),
         }
-    }
-}
-
-#[allow(dead_code)]
-async fn internal_update_camera_config(
-    client: &Client,
-    config: &CameraConfig,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let response = client
-        .patch("http://127.0.0.1:9997/v3/config/paths/patch/stream")
-        .json(config)
-        .timeout(Duration::from_secs(5))
-        .send()
-        .await?;
-
-    let status = response.status();
-    if status.is_success() {
-        Ok(())
-    } else {
-        let body = response.text().await.unwrap_or_default();
-        Err(format!("API error: {status}: {body}").into())
     }
 }

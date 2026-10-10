@@ -1,6 +1,6 @@
 use tokio::time::{Duration, Instant};
 
-use crate::{backend::gps_interface::GpsPosition, global::Global};
+use crate::{backend::gps_interface::GpsPosition};
 
 
 // pub static FAHRT_STATE: Global<FahrtStatus> = Global::new(FahrtStatus::Inactive);
@@ -14,13 +14,6 @@ pub enum FahrtStatus {
 impl FahrtStatus {
     pub fn new_active(current_time: String) -> Self {
         FahrtStatus::Active(Fahrt::new(current_time))
-    }
-
-    pub fn is_active(&self) -> bool {
-        match self {
-            FahrtStatus::Active(_) => true,
-            FahrtStatus::Inactive => false,
-        }
     }
 }
 
@@ -120,10 +113,6 @@ impl<D: FahrtDurationTrait> Fahrt<D> {
             Some(rate) => format!("{:.1$}", rate, number_of_digits),
             None => invalid_placeholder.to_string(),
         }
-    }
-
-    pub fn duration(&self) -> Duration {
-        self.timestamp.duration()
     }
 }
 

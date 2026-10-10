@@ -8,7 +8,7 @@ pub async fn satelite_status(cx: &Cx) -> Result<impl View> {
     let mut gps_receiver = app_context::<Receiver<GpsSatelites>>(cx).clone();
     gps_receiver.mark_changed();
 
-    let mut timer = tokio::time::interval(std::time::Duration::from_secs(5));
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(2));
     timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
 
     Ok(live! {

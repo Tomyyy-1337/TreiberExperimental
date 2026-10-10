@@ -1,15 +1,11 @@
 use std::str::FromStr;
 
 use crate::{
-    backend::camera_interface::{CAMERA_INTERFACE, FocusMode, Metering},
-    frontend::settings_subpages::settings_wrapper::settings_wrapper,
+    backend::camera_interface::{CameraInterface, FocusMode, Metering}, frontend::settings_subpages::settings_wrapper::settings_wrapper,
 };
+use tokio::sync::watch::{Receiver, Sender};
 use topcoat::{
-    Result,
-    context::Cx,
-    router::page,
-    runtime::{Event, Signal, procedure, signal},
-    view::{Attributes, View, attributes, component, view},
+    Result, context::{Cx, app_context}, router::page, runtime::{Event, Signal, procedure, signal}, view::{Attributes, View, attributes, component, view},
 };
 
 #[page("/settings/camera")]
@@ -26,18 +22,19 @@ pub async fn settings_camera_page() -> Result<impl View> {
 
 #[component]
 pub async fn settings_camera_component(cx: &Cx) -> Result<impl View> {
-    let hdr_enabled: Signal<bool> = signal(cx, || CAMERA_INTERFACE.hdr_enabled);
+    let camera_interface = app_context::<Receiver<CameraInterface>>(cx);
+    let hdr_enabled: Signal<bool> = signal(cx, || camera_interface.borrow().hdr_enabled);
 
     Ok(view! {
         <div class="grid gap-3 grid-cols-2">
-            focal_length()
-            metering_mode_settings()
-            focus_mode_settings()
-            bitrate_settings()
+            focal_length(camera_interface: camera_interface)
+            metering_mode_settings(camera_interface: camera_interface)
+            focus_mode_settings(camera_interface: camera_interface)
+            bitrate_settings(camera_interface: camera_interface)
             hdr_settings(hdr_enabled: &hdr_enabled)
             autolevel_settings()
             <div class="col-span-2">
-                exposure_settings(hdr_enabled: &hdr_enabled)
+                exposure_settings(hdr_enabled: &hdr_enabled, camera_interface: camera_interface)
             </div>
         </div>
     })
@@ -51,8 +48,8 @@ async fn select_widget<T: ToString + Send + Sync + PartialEq + 'static>(
     on_select: Attributes,
 ) -> Result<impl View> {
     Ok(view! {
-        <label class="grid min-w-0 gap-1 rounded-lg border border-border bg-card p-2.5 transition-colors has-[:focus-visible]:border-ring">
-            <span class="block text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground"> (title) </span>
+        <label class="grid min-w-0 gap-1 rounded-lg border border-border bg-card p-2.5 transition-colors has-focus-visible:border-ring">
+            <span class="block text-[0.66rem] font-bold uppercase tracking-widest text-muted-foreground"> (title) </span>
             <select
                 (on_select)
                 name=(format!("{}_select", title.split_whitespace().map(|s| s.to_lowercase()).collect::<Vec<_>>().join("_")))
@@ -71,7 +68,7 @@ async fn select_widget<T: ToString + Send + Sync + PartialEq + 'static>(
 }
 
 #[component]
-async fn focal_length() -> Result<impl View> {
+async fn focal_length(camera_interface: &Receiver<CameraInterface>) -> Result<impl View> {
     const OPTIONS: [(u8, &str); 3] = [(28, "28 mm"), (35, "35 mm"), (42, "42 mm")];
 
     let on_select = attributes! {
@@ -84,22 +81,23 @@ async fn focal_length() -> Result<impl View> {
         select_widget(
             title: "Brennweite",
             possible_values: &OPTIONS,
-            selected: CAMERA_INTERFACE.focal_length,
+            selected: camera_interface.borrow().focal_length,
             on_select: on_select,
         )
     })
 }
 
 #[procedure("/api/set_focal_length")]
-async fn set_focal_length(value: String) -> Result<()> {
+async fn set_focal_length(cx: &Cx, value: String) -> Result<()> {
+    let camera_interface = app_context::<Sender<CameraInterface>>(cx);
     let value = value.parse::<u8>().unwrap_or(0);
-    CAMERA_INTERFACE.modify_and_send(|s| s.focal_length = value);
-    println!("Focal length set to: {}", CAMERA_INTERFACE.focal_length);
+    camera_interface.send_modify(|s| s.focal_length = value);
+    println!("Focal length set to: {}", camera_interface.borrow().focal_length);
     Ok(())
 }
 
 #[component]
-async fn metering_mode_settings() -> Result<impl View> {
+async fn metering_mode_settings(camera_interface: &Receiver<CameraInterface>) -> Result<impl View> {
     const OPTIONS: [(Metering, &str); 2] =
         [(Metering::Average, "Average"), (Metering::Center, "Center")];
 
@@ -113,25 +111,26 @@ async fn metering_mode_settings() -> Result<impl View> {
         select_widget(
             title: "Belichtungsmessung",
             possible_values: &OPTIONS,
-            selected: CAMERA_INTERFACE.metering_mode,
+            selected: camera_interface.borrow().metering_mode,
             on_select: on_select,
         )
     })
 }
 
 #[procedure("/api/set_metering_mode")]
-async fn set_metering_mode(value: String) -> Result<()> {
+async fn set_metering_mode(cx: &Cx, value: String) -> Result<()> {
+    let camera_interface = app_context::<Sender<CameraInterface>>(cx);
     let metering_mode = Metering::from_str(&value).unwrap_or(Metering::Average);
-    CAMERA_INTERFACE.modify_and_send(|s| s.metering_mode = metering_mode);
+    camera_interface.send_modify(|s| s.metering_mode = metering_mode);
     println!(
         "Metering mode set to: {}",
-        CAMERA_INTERFACE.metering_mode.to_string()
+        camera_interface.borrow().metering_mode.to_string()
     );
     Ok(())
 }
 
 #[component]
-async fn focus_mode_settings() -> Result<impl View> {
+async fn focus_mode_settings(camera_interface: &Receiver<CameraInterface>) -> Result<impl View> {
     const OPTIONS: [(FocusMode, &str); 2] =
         [(FocusMode::Auto, "Auto"), (FocusMode::Fixed, "Manual")];
 
@@ -145,25 +144,26 @@ async fn focus_mode_settings() -> Result<impl View> {
         select_widget(
             title: "Fokusmodus",
             possible_values: &OPTIONS,
-            selected: CAMERA_INTERFACE.focus_mode,
+            selected: camera_interface.borrow().focus_mode,
             on_select: on_select,
         )
     })
 }
 
 #[procedure("/api/set_focus_mode")]
-async fn set_focus_mode(value: String) -> Result<()> {
+async fn set_focus_mode(cx: &Cx, value: String) -> Result<()> {
+    let camera_interface = app_context::<Sender<CameraInterface>>(cx);
     let focus_mode = FocusMode::from_str(&value).unwrap_or(FocusMode::Fixed);
-    CAMERA_INTERFACE.modify_and_send(|s| s.focus_mode = focus_mode);
+    camera_interface.send_modify(|s| s.focus_mode = focus_mode);
     println!(
         "Focus mode set to: {}",
-        CAMERA_INTERFACE.focus_mode.to_string()
+        camera_interface.borrow().focus_mode.to_string()
     );
     Ok(())
 }
 
 #[component]
-async fn bitrate_settings() -> Result<impl View> {
+async fn bitrate_settings(camera_interface: &Receiver<CameraInterface>) -> Result<impl View> {
     const OPTIONS: [(u32, &str); 5] = [
         (1600000, "1.6 MB/s"),
         (2400000, "2.4 MB/s"),
@@ -182,24 +182,25 @@ async fn bitrate_settings() -> Result<impl View> {
         select_widget(
             title: "Bitrate",
             possible_values: &OPTIONS,
-            selected: CAMERA_INTERFACE.bitrate,
+            selected: camera_interface.borrow().bitrate,
             on_select: on_select,
         )
     })
 }
 
 #[procedure("/api/set_bitrate")]
-async fn set_bitrate(value: String) -> Result<()> {
+async fn set_bitrate(cx: &Cx, value: String) -> Result<()> {
+    let camera_interface = app_context::<Sender<CameraInterface>>(cx);
     let bitrate = value.parse::<u32>().unwrap_or(3200000);
-    CAMERA_INTERFACE.modify_and_send(|s| s.bitrate = bitrate);
-    println!("Bitrate set to: {}", CAMERA_INTERFACE.bitrate);
+    camera_interface.send_modify(|s| s.bitrate = bitrate);
+    println!("Bitrate set to: {}", camera_interface.borrow().bitrate);
     Ok(())
 }
 
 #[component]
 async fn hdr_settings(hdr_enabled: &Signal<bool>) -> Result<impl View> {
     Ok(view! {
-        <label class="flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 transition-colors">
+        <label class="flex min-h-18 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 transition-colors">
             <span class="grid min-w-0 gap-1">
                 <span class="text-sm font-medium">"HDR"</span>
                 <small class="text-[0.68rem] leading-none text-muted-foreground">$(if hdr_enabled.get() {"Aktiv"} else {"Aus"})</small>
@@ -214,18 +215,20 @@ async fn hdr_settings(hdr_enabled: &Signal<bool>) -> Result<impl View> {
                     hdr_enabled.set(new_hdr_enabled);
                 })
             />
-            <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-ring" aria-hidden="true"></span>
+            <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-ring" aria-hidden="true"></span>
         </label>
     })
 }
 
 #[procedure("/api/toggle_hdr")]
-async fn toggle_hdr() -> Result<bool> {
-    CAMERA_INTERFACE.modify_and_send(|camera_interface| {
+async fn toggle_hdr(cx: &Cx) -> Result<bool> {
+    let camera_interface = app_context::<Sender<CameraInterface>>(cx);
+
+    camera_interface.send_modify(|camera_interface| {
         camera_interface.hdr_enabled = !camera_interface.hdr_enabled
     });
-    println!("HDR set to: {}", CAMERA_INTERFACE.hdr_enabled);
-    Ok(CAMERA_INTERFACE.hdr_enabled)
+    println!("HDR set to: {}", camera_interface.borrow().hdr_enabled);
+    Ok(camera_interface.borrow().hdr_enabled)
 }
 
 #[component]
@@ -233,7 +236,7 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
     let auto_level_enabled: Signal<bool> = signal(cx, || false);
 
     Ok(view! {
-        <label class="flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 transition-colors">
+        <label class="flex min-h-18 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-2.5 py-2.5 transition-colors">
             <span class="grid min-w-0 gap-1">
                 <span class="text-sm font-medium">"Auto Level"</span>
                 <small class="text-[0.68rem] leading-none text-muted-foreground">$(if auto_level_enabled.get() {"Aktiv"} else {"Aus"})</small>
@@ -247,15 +250,15 @@ async fn autolevel_settings(cx: &Cx) -> Result<impl View> {
                     auto_level_enabled.set(!auto_level_enabled.get());
                 })
             />
-            <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-ring" aria-hidden="true"></span>
+            <span class="relative h-5 w-9 shrink-0 rounded-full bg-muted-foreground transition-colors after:absolute after:left-1 after:top-1 after:h-3 after:w-3 after:rounded-full after:bg-background after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-ring" aria-hidden="true"></span>
         </label>
     })
 }
 
 #[component]
-async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl View> {
+async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>, camera_interface: &Receiver<CameraInterface>) -> Result<impl View> {
     let exposure_signal: Signal<String> = signal(cx, || {
-        format!("{:.1}", CAMERA_INTERFACE.exposure_compenstion)
+        format!("{:.1}", camera_interface.borrow().exposure_compenstion)
     });
 
     const EXPOSURE_LABELS: [&str; 13] = [
@@ -266,7 +269,7 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
         <div :hidden=$(hdr_enabled.get())>
             <section class="my-0 grid h-24 content-start gap-2 rounded-lg border border-border bg-card px-3 py-2">
                 <div class="flex items-center justify-between">
-                    <span class="text-[0.66rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">"Belichtung"</span>
+                    <span class="text-[0.66rem] font-bold uppercase tracking-widest text-muted-foreground">"Belichtung"</span>
                     <output for="camera-exposure-compensation" class="text-sm font-semibold tabular-nums text-card-foreground">
                         $(if exposure_signal.read().starts_with("-") {""} else {"+"})
                         format_float(signal: &exposure_signal, digits: 1)
@@ -289,7 +292,7 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
                             set_exposure(event.target.value).await;
                         })
                     />
-                    <div class="grid grid-cols-[repeat(13,minmax(0,1fr))] text-[0.7rem] tabular-nums text-muted-foreground" aria-hidden="true">
+                    <div class="grid grid-cols-13 text-[0.7rem] tabular-nums text-muted-foreground" aria-hidden="true">
                         for (index, label) in EXPOSURE_LABELS.iter().enumerate() {
                             if index % 2 == 0 {
                                 <span class="flex flex-col items-center"><i class="h-2.5 w-px bg-muted-foreground"></i><b class="font-normal">(label)</b></span>
@@ -309,9 +312,10 @@ async fn exposure_settings(cx: &Cx, hdr_enabled: &Signal<bool>) -> Result<impl V
 }
 
 #[procedure("/api/set_exposure")]
-pub async fn set_exposure(value: String) -> Result<()> {
+pub async fn set_exposure(cx: &Cx, value: String) -> Result<()> {
+    let camera_interface = app_context::<Sender<CameraInterface>>(cx);
     let value = value.parse::<f32>().unwrap_or(0.0);
-    CAMERA_INTERFACE.modify_and_send(|s| s.exposure_compenstion = value);
+    camera_interface.send_modify(|s| s.exposure_compenstion = value);
     println!("Exposure compensation set to: {}", value);
     Ok(())
 }

@@ -12,11 +12,11 @@ use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 use tower_http::services::ServeDir;
 use tower::ServiceBuilder;
 
+use crate::backend::camera_interface::CameraInterface;
 use crate::backend::fahrt::{self, FahrtStatus};
 use crate::backend::fahrtenbuch::FAHRTENBUCH;
 use crate::backend::gps_interface::GpsPosition;
-use crate::backend::plugins::PLUGINS;
-use crate::{backend::{camera_interface::CAMERA_INTERFACE}}; 
+use crate::backend::plugins::PLUGINS; 
 
 #[derive(Copy, Clone)]
 struct BatteryState {
@@ -59,14 +59,13 @@ fn main() {
             let (gps_satelits_sender, gps_satelits_receiver) = watch::channel(GpsSatelites { count: 0 });
             let (gps_state_sender, gps_state_receiver) = watch::channel(GpsState { speed: 0.0, latitude: 0.0, longitude: 0.0 });
             let (fahrt_sender, fahrt_receiver) = watch::channel(fahrt::FahrtStatus::Inactive);
-
-            // Sent initial Camera configuration to the camera
-            tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
+            let (camera_interface_sender, camera_interface_receiver) = watch::channel(CameraInterface::new());
             
             // Spawn backend Tasks
             task::spawn_local(update_battery_state(battery_sender));
             task::spawn_local(update_gps_state(gps_state_sender.clone(), gps_satelits_sender));
             task::spawn_local(update_fahrt_state(fahrt_sender.clone(), gps_state_receiver.clone(), gps_satelits_receiver.clone()));
+            task::spawn_local(update_camera(camera_interface_receiver.clone()));
 
             // Start the web server
             topcoat::start(
@@ -74,8 +73,10 @@ fn main() {
                     .app_context::<Receiver<BatteryState>>(battery_receiver)
                     .app_context::<Receiver<GpsSatelites>>(gps_satelits_receiver)
                     .app_context::<Receiver<GpsState>>(gps_state_receiver)
-                    .app_context::<Receiver<fahrt::FahrtStatus>>(fahrt_receiver)
-                    .app_context::<Sender<fahrt::FahrtStatus>>(fahrt_sender)
+                    .app_context::<Receiver<FahrtStatus>>(fahrt_receiver)
+                    .app_context::<Sender<FahrtStatus>>(fahrt_sender)
+                    .app_context::<Receiver<CameraInterface>>(camera_interface_receiver)
+                    .app_context::<Sender<CameraInterface>>(camera_interface_sender)
                     .discover()
                     .cookies()
                     .assets(AssetBundle::load().unwrap())
@@ -112,6 +113,18 @@ fn main() {
         });
 }
 
+/// Send updates to the camera when the camera interface changes
+async fn update_camera(mut camera_receiver: Receiver<CameraInterface>) {    
+    camera_receiver.mark_changed();
+
+    while let Ok(_) = camera_receiver.changed().await {
+        let camera_interface = camera_receiver.borrow().clone();
+        if let Err(_e) = camera_interface.send_to_camera().await {
+            println!("Camera can not be reached");
+        }
+    }
+}
+
 // Read battery module
 async fn update_battery_state(battery_sender: Sender<BatteryState>) {
     loop {
@@ -129,6 +142,8 @@ async fn update_gps_state(
     loop {
         gps_state_sender.send_modify(|s| {
             s.speed = (s.speed + 5.0) % 120.0;
+            s.latitude = (s.latitude + 0.0001) % 90.0;
+            s.longitude = (s.longitude + 0.0001) % 180.0;
         });
         gps_satelites_sender.send_modify(|s| {
             s.count = (s.count + 1) % 32;
