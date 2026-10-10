@@ -1,9 +1,9 @@
 use tokio::sync::watch::Receiver;
-use topcoat::{Result, context::{Cx, app_context}, runtime::connected, view::{EmitToken, View, class, component, emit, live, view}};
+use topcoat::{Result, context::{Cx, app_context}, runtime::{connected, shard}, view::{EmitToken, View, class, emit, live}};
 
 use crate::BatteryState;
 
-#[component]
+#[shard]
 pub async fn battery_status(cx: &Cx) -> Result<impl View> {
     let mut battery_percentage_watch = app_context::<Receiver<BatteryState>>(cx).clone();
     battery_percentage_watch.mark_changed();

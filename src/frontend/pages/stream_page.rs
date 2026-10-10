@@ -1,5 +1,5 @@
 use tokio::sync::watch::{self, Receiver};
-use topcoat::{Result, context::{Cx, app_context}, router::page, runtime::{Event, connected, procedure}, view::{Child, EmitToken, View, class, component, emit, live, view}};
+use topcoat::{Result, context::{Cx, app_context}, router::page, runtime::{Event, connected, procedure, shard}, view::{Child, EmitToken, View, class, component, emit, live, view}};
 
 use crate::{backend::{fahrt::{self, FahrtStatus}, fahrtenbuch::FAHRTENBUCH}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
 
@@ -50,7 +50,7 @@ async fn collapsable_section(title: &str, child: Child<'_>) -> Result<impl View>
     })
 }
 
-#[component]
+#[shard]
 async fn fahrt_info(cx: &Cx) -> Result<impl View> {
     let mut fahrt_state = app_context::<Receiver<fahrt::FahrtStatus>>(cx).clone();
     fahrt_state.mark_changed();

@@ -1,9 +1,9 @@
 use tokio::sync::watch::Receiver;
-use topcoat::{Result, context::{Cx, app_context}, runtime::connected, view::{EmitToken, View, class, component, emit, live}};
+use topcoat::{Result, context::{Cx, app_context}, runtime::{connected, shard}, view::{EmitToken, View, class, component, emit, live}};
 
 use crate::{GpsSatelites};
 
-#[component]
+#[shard]
 pub async fn satelite_status(cx: &Cx) -> Result<impl View> {
     let mut gps_receiver = app_context::<Receiver<GpsSatelites>>(cx).clone();
     gps_receiver.mark_changed();
