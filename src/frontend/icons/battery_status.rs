@@ -1,5 +1,5 @@
 use tokio::sync::watch::Receiver;
-use topcoat::{Result, context::{Cx, app_context}, runtime::connected, view::{EmitToken, View, component, emit, live, view}};
+use topcoat::{Result, context::{Cx, app_context}, runtime::connected, view::{EmitToken, View, class, component, emit, live, view}};
 
 use crate::BatteryState;
 
@@ -9,17 +9,18 @@ pub async fn battery_status(cx: &Cx) -> Result<impl View> {
 
     Ok(live! { 
         while let Ok(()) = battery_percentage_watch.changed().await {
+            println!("Battery percentage changed");
             let battery_percentage = battery_percentage_watch.borrow().battery_percentage;
-            
+
             let color = match battery_percentage {
-                0..=14 => "text-red-500",
-                15..=30 => "text-orange-500",
-                31..=50 => "text-yellow-500",
-                _ => "text-green-500",
+                0..=14 => class!("text-red-500"),
+                15..=30 => class!("text-orange-500"),
+                31..=50 => class!("text-yellow-500"),
+                _ => class!("text-green-500"),
             };
 
             let token = emit! {
-                <div class=(format!("flex items-center gap-1 font-bold leading-none {}", color))>
+                <div class=(class!("flex items-center gap-1 font-bold leading-none", color, "p-4"))>
                     <svg class="block h-[1.1rem] w-[1.1rem] shrink-0 fill-none stroke-current" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                         <rect x="3" y="7" width="16" height="10" rx="2" />
                         <rect x="19" y="10" width="2" height="4" rx="1" />
