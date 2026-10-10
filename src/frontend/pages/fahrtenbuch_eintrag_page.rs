@@ -1,8 +1,9 @@
 use crate::{
-    backend::{fahrt::{Finished, Fahrt}, fahrtenbuch::FAHRTENBUCH}, frontend::pages::fahrtenbuch_page::fahrtenbuch_page,
+    backend::{fahrt::{Fahrt, Finished}, fahrtenbuch::{Fahrtenbuch}}, frontend::pages::fahrtenbuch_page::fahrtenbuch_page,
 };
+use tokio::sync::watch;
 use topcoat::{
-    Result, context::Cx, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure, signal}, view::{StaticClass, View, attributes, class, component, view},
+    Result, context::{Cx, app_context}, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure, signal}, view::{View, attributes, component, view},
 };
 
 path_param!(pub id: u32);
@@ -10,25 +11,30 @@ path_param!(pub id: u32);
 #[page("/fahrtenbuch/{id}")]
 pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
     let post_id = *path_param::<Id>(cx).ok_or_not_found()?;
-    let entry = FAHRTENBUCH
+    let fahrtenbuch = app_context::<watch::Sender<Fahrtenbuch>>(cx);
+    let entry = fahrtenbuch
+        .borrow()
         .get(post_id)
-        .ok_or_redirect(href!(fahrtenbuch_page).resolve(cx))?;
+        .ok_or_redirect(href!(fahrtenbuch_page).resolve(cx))?
+        .clone();
 
     Ok(view! {
-        title_card(post_id: post_id, entry: entry)
+        title_card(post_id: post_id, entry: &entry)
         
-        map_component(id: post_id, entry: entry)
+        map_component(id: post_id, entry: &entry)
 
-        fahrt_stats(fahrt: entry)
+        fahrt_stats(fahrt: &entry)
 
         delete_button(post_id: post_id)
     })
 }
 
 #[component]
-async fn title_card(post_id: u32, entry: &Fahrt<Finished>) -> Result<impl View> {
-    let next_id = FAHRTENBUCH.get_id_of_next(post_id);
-    let previous_id = FAHRTENBUCH.get_id_of_previous(post_id);
+async fn title_card(cx: &Cx, post_id: u32, entry: &Fahrt<Finished>) -> Result<impl View> {
+    let fahrtenbuch = app_context::<watch::Receiver<Fahrtenbuch>>(cx);
+
+    let next_id = fahrtenbuch.borrow().get_id_of_next(post_id);
+    let previous_id = fahrtenbuch.borrow().get_id_of_previous(post_id);
 
     Ok(view! {
         <section class="grid gap-4 rounded-2xl border border-border bg-card p-4">
@@ -80,7 +86,7 @@ async fn fahrt_stats(fahrt: &Fahrt<Finished>) -> Result<impl View> {
             <div class="col-span-2 grid gap-1 rounded-xl border border-border bg-background p-4">
                 <span class="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">"Gesamtstrecke"</span>
                 <div class="flex items-baseline gap-1 text-2xl font-semibold tracking-tight text-card-foreground">
-                    <span> ( fahrt.average_speed_kmh_formated(1, "N/A") ) </span>
+                    <span> ( fahrt.formated_distance_km(1) ) </span>
                     <span class="text-sm font-medium text-muted-foreground">" km"</span>
                 </div>
             </div>
@@ -172,8 +178,9 @@ async fn delete_button(cx: &Cx, post_id: u32) -> Result<impl View> {
 }
 
 #[procedure("/api/delete_fahrtenbuch_entry")]
-async fn delete_fahrtenbuch_entry(entry_id: u32) -> Result<()> {
-    FAHRTENBUCH.modify(|state| {
+async fn delete_fahrtenbuch_entry(cx: &Cx, entry_id: u32) -> Result<()> {
+    let fahrtenbuch = app_context::<watch::Sender<Fahrtenbuch>>(cx); 
+    fahrtenbuch.send_modify(|state| {
         state.entries.retain(|entry| entry.id != entry_id);
     });
     Ok(())

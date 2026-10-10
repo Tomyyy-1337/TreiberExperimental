@@ -1,8 +1,6 @@
 use std::{collections::VecDeque};
 
-use crate::{backend::fahrt::{Fahrt, Finished}, global::Global};
-
-pub static FAHRTENBUCH: Global<Fahrtenbuch> = Global::new(Fahrtenbuch::new());
+use crate::backend::fahrt::{Fahrt, Finished};
 
 const MAX_ENTRIES: usize = 20;
 

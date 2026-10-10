@@ -1,7 +1,7 @@
 use tokio::sync::watch::{self, Receiver};
 use topcoat::{Result, context::{Cx, app_context}, router::page, runtime::{Event, connected, procedure, shard}, view::{Child, EmitToken, View, class, component, emit, live, view}};
 
-use crate::{backend::{fahrt::{self, FahrtStatus}, fahrtenbuch::FAHRTENBUCH}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
+use crate::{backend::{fahrt::{self, FahrtStatus}, fahrtenbuch::{self, Fahrtenbuch}}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
 
 #[page("/")]
 pub async fn camera_page() -> Result<impl View> {
@@ -116,11 +116,12 @@ async fn start_fahrt(cx: &Cx, current_time: String) -> Result<()> {
 #[procedure("/api/stop_fahrt")]
 async fn stop_fahrt(cx: &Cx) -> Result<()> {
     let fahrt_status = app_context::<watch::Sender<FahrtStatus>>(&cx);
+    let fahrtenbuch = app_context::<watch::Sender<Fahrtenbuch>>(&cx);
 
     let fahrt = fahrt_status.send_replace(FahrtStatus::Inactive);
     if let FahrtStatus::Active(a) = fahrt {
         let finished_fahrt = a.finish();
-        FAHRTENBUCH.modify(|f| f.add_entry(finished_fahrt));
+        fahrtenbuch.send_modify(|f| f.add_entry(finished_fahrt));
     }
     Ok(())
 }

@@ -14,7 +14,7 @@ use tower::ServiceBuilder;
 
 use crate::backend::camera_interface::CameraInterface;
 use crate::backend::fahrt::{self, FahrtStatus};
-use crate::backend::fahrtenbuch::FAHRTENBUCH;
+use crate::backend::fahrtenbuch::Fahrtenbuch;
 use crate::backend::gps_interface::GpsPosition;
 use crate::backend::plugins::PLUGINS; 
 
@@ -37,17 +37,17 @@ fn main() {
     // Initial plugin load
     PLUGINS.modify(|plugins| plugins.load() );
 
-    FAHRTENBUCH.modify(|fb| {
-        // add fake entries 
-        let fahrt = fahrt::Fahrt::new("Now".to_string()).finish();
-        fb.add_entry(fahrt);
+    // FAHRTENBUCH.modify(|fb| {
+    //     // add fake entries 
+    //     let fahrt = fahrt::Fahrt::new("Now".to_string()).finish();
+    //     fb.add_entry(fahrt);
 
-        let mut fahrt2 = fahrt::Fahrt::new("Later".to_string()).finish();
-        fahrt2.position_history.push(GpsPosition { latitude: 49.0, longitude: 8.0 });
-        fahrt2.position_history.push(GpsPosition { latitude: 50.0, longitude: 9.0 });
-        fahrt2.position_history.push(GpsPosition { latitude: 51.0, longitude: 10.0 });
-        fb.add_entry(fahrt2);
-    });
+    //     let mut fahrt2 = fahrt::Fahrt::new("Later".to_string()).finish();
+    //     fahrt2.position_history.push(GpsPosition { latitude: 49.0, longitude: 8.0 });
+    //     fahrt2.position_history.push(GpsPosition { latitude: 50.0, longitude: 9.0 });
+    //     fahrt2.position_history.push(GpsPosition { latitude: 51.0, longitude: 10.0 });
+    //     fb.add_entry(fahrt2);
+    // });
 
     tokio::runtime::Builder::new_current_thread()
         .max_blocking_threads(4)
@@ -60,7 +60,8 @@ fn main() {
             let (gps_state_sender, gps_state_receiver) = watch::channel(GpsState { speed: 0.0, latitude: 0.0, longitude: 0.0 });
             let (fahrt_sender, fahrt_receiver) = watch::channel(fahrt::FahrtStatus::Inactive);
             let (camera_interface_sender, camera_interface_receiver) = watch::channel(CameraInterface::new());
-            
+            let (fahrtenbuch_sender, fahrtenbuch_receiver) = watch::channel(Fahrtenbuch::new());
+
             // Spawn backend Tasks
             task::spawn_local(update_battery_state(battery_sender));
             task::spawn_local(update_gps_state(gps_state_sender.clone(), gps_satelits_sender));
@@ -73,10 +74,12 @@ fn main() {
                     .app_context::<Receiver<BatteryState>>(battery_receiver)
                     .app_context::<Receiver<GpsSatelites>>(gps_satelits_receiver)
                     .app_context::<Receiver<GpsState>>(gps_state_receiver)
-                    .app_context::<Receiver<FahrtStatus>>(fahrt_receiver)
                     .app_context::<Sender<FahrtStatus>>(fahrt_sender)
-                    .app_context::<Receiver<CameraInterface>>(camera_interface_receiver)
+                    .app_context::<Receiver<FahrtStatus>>(fahrt_receiver)
                     .app_context::<Sender<CameraInterface>>(camera_interface_sender)
+                    .app_context::<Receiver<CameraInterface>>(camera_interface_receiver)
+                    .app_context::<Sender<Fahrtenbuch>>(fahrtenbuch_sender)
+                    .app_context::<Receiver<Fahrtenbuch>>(fahrtenbuch_receiver)
                     .discover()
                     .cookies()
                     .assets(AssetBundle::load().unwrap())
