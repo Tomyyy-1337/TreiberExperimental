@@ -1,6 +1,6 @@
 use topcoat::{Result, context::Cx, router::page, runtime::{Event, connected, procedure, signal}, view::{Child, View, component, emit, live, view}};
 
-use crate::{backend::fahrtenbuch::{FAHRT_STATE, FAHRTENBUCH, FahrtStatus}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
+use crate::{backend::{fahrt::{FAHRT_STATE, FahrtStatus}, fahrtenbuch::FAHRTENBUCH}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
 
 #[page("/")]
 pub async fn camera_page() -> Result<impl View> {

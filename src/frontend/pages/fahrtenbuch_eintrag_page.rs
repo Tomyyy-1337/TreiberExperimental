@@ -1,6 +1,5 @@
 use crate::{
-    backend::fahrtenbuch::{FAHRTENBUCH, FinishedFahrt},
-    frontend::pages::fahrtenbuch_page::fahrtenbuch_page,
+    backend::{fahrt::{Finished, Fahrt}, fahrtenbuch::FAHRTENBUCH}, frontend::pages::fahrtenbuch_page::fahrtenbuch_page,
 };
 use topcoat::{
     Result, context::Cx, router::{error::RouterErrorExt, href, page, path_param}, runtime::{Event, PrefetchMode, link, procedure, signal}, view::{StaticClass, View, attributes, class, component, view},
@@ -27,7 +26,7 @@ pub async fn fahrtenbuch_eintrag(cx: &Cx) -> Result<impl View> {
 }
 
 #[component]
-async fn title_card(post_id: u32, entry: &FinishedFahrt) -> Result<impl View> {
+async fn title_card(post_id: u32, entry: &Fahrt<Finished>) -> Result<impl View> {
     let next_id = FAHRTENBUCH.get_id_of_next(post_id);
     let previous_id = FAHRTENBUCH.get_id_of_previous(post_id);
 
@@ -75,49 +74,27 @@ async fn title_card(post_id: u32, entry: &FinishedFahrt) -> Result<impl View> {
 }
 
 #[component]
-async fn fahrt_stats(fahrt: &FinishedFahrt) -> Result<impl View> {
-    let duration = format!(
-        "{:02}:{:02}:{:02}",
-        fahrt.dauer.as_secs() / 3600,
-        (fahrt.dauer.as_secs() % 3600) / 60,
-        fahrt.dauer.as_secs() % 60
-    );
-    let avg_split_time = if fahrt.strecke_km > 0.0 {
-        format!("{:.2}", fahrt.dauer.as_secs_f64() / (fahrt.strecke_km * 1000.0 / 500.0))
-    } else {
-        "N/A".to_string()
-    };
-    let avg_speed = if fahrt.dauer.as_secs_f64() > 0.0 {
-        format!("{:.2}",fahrt.strecke_km / (fahrt.dauer.as_secs_f64() / 3600.0))
-    } else {
-        "N/A".to_string()
-    };
-    let avg_stroke_rate = if fahrt.dauer.as_secs_f64() > 0.0 {
-        format!("{:.2}",fahrt.schläge as f64 / (fahrt.dauer.as_secs_f64() / 60.0))
-    } else {
-        "N/A".to_string()
-    };
-
+async fn fahrt_stats(fahrt: &Fahrt<Finished>) -> Result<impl View> {
     Ok(view! {
         <section class="my-4 grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-2">
             <div class="col-span-2 grid gap-1 rounded-xl border border-border bg-background p-4">
                 <span class="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">"Gesamtstrecke"</span>
                 <div class="flex items-baseline gap-1 text-2xl font-semibold tracking-tight text-card-foreground">
-                    <span> ( &fahrt.strecke_km ) </span>
+                    <span> ( fahrt.average_speed_kmh_formated(1, "N/A") ) </span>
                     <span class="text-sm font-medium text-muted-foreground">" km"</span>
                 </div>
             </div>
 
-            stat_card(title: "Dauer", value: &duration)
-            stat_card(title: "Ø Splittime", value: &avg_split_time, unit: " / 500 m")
-            stat_card(title: "Ø Geschwindigkeit", value: &avg_speed, unit: "km/h")
-            stat_card(title: "Ø Schlagzahl", value: &avg_stroke_rate, unit: "bpm")
+            stat_card(title: "Dauer", value: fahrt.formated_duration_mm_ss())
+            stat_card(title: "Ø Splittime", value: fahrt.average_split_time_mm_ss("N/A"), unit: " / 500 m")
+            stat_card(title: "Ø Geschwindigkeit", value: fahrt.average_speed_kmh_formated(2, "N/A"), unit: "km/h")
+            stat_card(title: "Ø Schlagzahl", value: fahrt.average_stroke_rate_formated(2, "N/A"), unit: "bpm")
         </section>
     })
 }
 
 #[component]
-async fn stat_card(title: &str, value: &str, #[default] unit: &str) -> Result<impl View> {
+async fn stat_card(title: &str, value: String, #[default] unit: &str) -> Result<impl View> {
     Ok(view! {
         <div class="grid gap-1 rounded-xl border border-border bg-background p-3">
             <span class="text-xs font-semibold text-muted-foreground">( title )</span>
@@ -127,7 +104,7 @@ async fn stat_card(title: &str, value: &str, #[default] unit: &str) -> Result<im
 }
 
 #[component]
-async fn map_component(id: u32, entry: &FinishedFahrt) -> Result<impl View> {
+async fn map_component(id: u32, entry: &Fahrt<Finished>) -> Result<impl View> {
     let gps_data_json = serde_json::to_string(&entry.position_history).unwrap();
     let available_maps = std::fs::read_dir("./maps")?
         .filter_map(|entry| entry.ok())

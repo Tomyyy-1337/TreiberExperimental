@@ -2,8 +2,6 @@ pub mod global;
 mod frontend;
 mod backend;
 
-use std::time::Duration;
-
 use tokio::{runtime::LocalOptions, task};
 use topcoat::router::tower::TowerRoute;
 use topcoat::router::{Compression, StripPrefixLayer};
@@ -12,8 +10,11 @@ use tower_http::compression::{predicate::SizeAbove, CompressionLayer};
 use tower_http::services::ServeDir;
 use tower::ServiceBuilder;
 
+use crate::backend::fahrt;
+use crate::backend::fahrtenbuch::FAHRTENBUCH;
+use crate::backend::gps_interface::GpsPosition;
 use crate::backend::plugins::PLUGINS;
-use crate::{backend::{camera_interface::CAMERA_INTERFACE, fahrtenbuch::{FAHRTENBUCH, FinishedFahrt, GpsPosition}}, global::Global}; 
+use crate::{backend::{camera_interface::CAMERA_INTERFACE}, global::Global}; 
 
 struct BatteryState {
     pub battery_percentage: u8,
@@ -36,39 +37,20 @@ static GPS_STATE: Global<GpsState> = Global::new(
 );
 
 fn main() {
-    FAHRTENBUCH.modify(|state| {
-        for i in 0..20 {
-            state.add_entry(
-                FinishedFahrt {
-                    start_time: format!("2024-06-{}", i + 1),
-                    dauer: Duration::from_mins(i),
-                    strecke_km: (i * 10) as f64,
-                    schläge: (i * 5) as u32,
-                    position_history: vec![
-                        GpsPosition {
-                            latitude: 49.4400657,
-                            longitude: 7.7491265 + i as f64 / 50.0
-                        },
-                        GpsPosition {
-                            latitude: 49.4401657,
-                            longitude: 7.7411265 + i as f64 / 50.0
-                        },
-                        GpsPosition {
-                            latitude: 49.4402657,
-                            longitude: 7.7431265 + i as f64 / 50.0
-                        },
-                        GpsPosition {
-                            latitude: 49.4403657,
-                            longitude: 7.7451265 + i as f64 / 50.0
-                        },
-                    ]
-                }
-            );
-        }
-    });
-
     // Initial plugin load
     PLUGINS.modify(|plugins| plugins.load() );
+
+    FAHRTENBUCH.modify(|fb| {
+        // add fake entries 
+        let fahrt = fahrt::Fahrt::new("Now".to_string()).finish();
+        fb.add_entry(fahrt);
+
+        let mut fahrt2 = fahrt::Fahrt::new("Later".to_string()).finish();
+        fahrt2.position_history.push(GpsPosition { latitude: 49.0, longitude: 8.0 });
+        fahrt2.position_history.push(GpsPosition { latitude: 50.0, longitude: 9.0 });
+        fahrt2.position_history.push(GpsPosition { latitude: 51.0, longitude: 10.0 });
+        fb.add_entry(fahrt2);
+    });
 
     tokio::runtime::Builder::new_current_thread()
         .max_blocking_threads(4)

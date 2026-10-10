@@ -1,14 +1,20 @@
 use topcoat::{Result, router::{href, page}, runtime::{PrefetchMode, link}, view::{View, attributes, component, view}};
-use crate::{backend::fahrtenbuch::{FAHRTENBUCH, FinishedFahrt, Indexed}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{Id, fahrtenbuch_eintrag}}};
+use crate::{backend::fahrtenbuch::{FAHRTENBUCH, Indexed}, backend::fahrt::{Fahrt, Finished}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{Id, fahrtenbuch_eintrag}}};
 
 #[page("/fahrtenbuch")]
 pub async fn fahrtenbuch_page() -> Result<impl View> { 
     Ok(view! { 
         nav_layout(
             <div class="my-4 grid gap-3">
-                #[key(id)]
-                for Indexed::<FinishedFahrt> { id, entry } in FAHRTENBUCH.entries.iter().rev() {
-                    fahrtenbuch_eintragen(id: *id, entry: entry)
+                if FAHRTENBUCH.entries.is_empty() {
+                    <p class="text-center text-muted-foreground p-8 border border-border rounded-2xl bg-card">
+                        "Keine Fahrten vorhanden." 
+                    </p>
+                } else {
+                    #[key(id)]
+                    for Indexed::<Fahrt<Finished>> { id, entry } in FAHRTENBUCH.entries.iter().rev() {
+                        fahrtenbuch_eintragen(id: *id, entry: entry)
+                    } 
                 }
             </div>
         )
@@ -16,10 +22,7 @@ pub async fn fahrtenbuch_page() -> Result<impl View> {
 }
 
 #[component]
-async fn fahrtenbuch_eintragen(id: u32, entry: &FinishedFahrt) -> Result<impl View> {
-    let time_secs = entry.dauer.as_secs();
-    let time_mins = time_secs / 60;
-    
+async fn fahrtenbuch_eintragen(id: u32, entry: &Fahrt<Finished>) -> Result<impl View> {
     Ok(view! {
         link(
             href: href!(fahrtenbuch_eintrag, Id(id)),
@@ -33,8 +36,8 @@ async fn fahrtenbuch_eintragen(id: u32, entry: &FinishedFahrt) -> Result<impl Vi
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="py-1 rounded-full bg-background px-3 text-sm font-medium text-muted-foreground">(&entry.strecke_km) " km"</span>
-                    <span class="py-1 rounded-full bg-background px-3 text-sm font-medium text-muted-foreground"> (time_mins) ":" ( format!("{:02}", time_secs % 60)) " min"</span>
+                    <span class="py-1 rounded-full bg-background px-3 text-sm font-medium text-muted-foreground">(entry.formated_distance_km(2)) " km"</span>
+                    <span class="py-1 rounded-full bg-background px-3 text-sm font-medium text-muted-foreground"> (entry.formated_duration_mm_ss()) " min"</span>
                 </div>
             </article>
         )
