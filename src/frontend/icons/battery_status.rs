@@ -6,10 +6,14 @@ use crate::BatteryState;
 #[component]
 pub async fn battery_status(cx: &Cx) -> Result<impl View> {
     let mut battery_percentage_watch = app_context::<Receiver<BatteryState>>(cx).clone();
+    battery_percentage_watch.mark_changed();
+
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(15));
+    timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
 
     Ok(live! { 
         while let Ok(()) = battery_percentage_watch.changed().await {
-            println!("Battery percentage changed");
+            timer.tick().await;
             let battery_percentage = battery_percentage_watch.borrow().battery_percentage;
 
             let color = match battery_percentage {

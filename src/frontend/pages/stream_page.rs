@@ -1,6 +1,9 @@
-use topcoat::{Result, context::Cx, router::page, runtime::{Event, connected, procedure, signal}, view::{Child, EmitToken, View, component, emit, live, view}};
+use std::ops::ControlFlow::Continue;
 
-use crate::{backend::{fahrt::{FAHRT_STATE, FahrtStatus, FahrtDurationTrait}, fahrtenbuch::FAHRTENBUCH}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
+use tokio::{select, sync::watch::{self, Receiver}, time::MissedTickBehavior::{self, Skip}};
+use topcoat::{Result, context::{Cx, app_context}, router::page, runtime::{Event, connected, procedure}, view::{Child, EmitToken, View, class, component, emit, live, view}};
+
+use crate::{backend::{fahrt::{self, FahrtStatus}, fahrtenbuch::FAHRTENBUCH}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
 
 #[page("/")]
 pub async fn camera_page() -> Result<impl View> {
@@ -51,19 +54,19 @@ async fn collapsable_section(title: &str, child: Child<'_>) -> Result<impl View>
 
 #[component]
 async fn fahrt_info(cx: &Cx) -> Result<impl View> {
+    let mut fahrt_state = app_context::<Receiver<fahrt::FahrtStatus>>(cx).clone();
+    fahrt_state.mark_changed();
+
     Ok(live! {
-        let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
-
-        for i in 0u64.. {
-            timer.tick().await;
-
-            let (dauer, distanz) = match &*FAHRT_STATE {
-                FahrtStatus::Active(a) => (a.formated_duration_mm_ss(), a.formated_distance_km(2)),
-                _ => ("--:--".to_string(), "--.--".to_string()),
+        while let Ok(()) = fahrt_state.changed().await {
+            let (is_active, dauer, distanz) = match &*fahrt_state.borrow() {
+                FahrtStatus::Active(a) => (true, a.formated_duration_mm_ss(), a.formated_distance_km(2)),
+                _ => (false, "--:--".to_string(), "--.--".to_string())
             };
+
             let token = emit!{
                 <section class="my-4 rounded-2xl border border-border bg-card p-2">
-                    fahrt_button(key: i)
+                    fahrt_button(is_active: is_active)
 
                     <section class="my-4 grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-2">
                         <div class="grid gap-1 rounded-xl border border-border bg-background p-3">
@@ -87,52 +90,39 @@ async fn fahrt_info(cx: &Cx) -> Result<impl View> {
 }
 
 #[component]
-async fn fahrt_button(cx: &Cx, key: u64) -> Result<impl View> {
-    let active = signal(&cx.keyed(key), || FAHRT_STATE.is_active());
+async fn fahrt_button(is_active: bool) -> Result<impl View> {
     Ok(view! {
-        <div :hidden=$(!active.get())>
-            <button
-                class="flex h-12 w-full items-center justify-center rounded-xl bg-destructive px-4 text-base font-semibold text-destructive-foreground shadow-xs transition-colors hover:bg-destructive/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.99]"
-                @click=$(async |_event: Event| {
-                    active.set(false);
+        <button
+            class=(class!("bg-destructive" if is_active else "bg-primary" ,"flex h-12 w-full items-center justify-center rounded-xl px-4 text-base font-semibold text-destructive-foreground active:scale-[0.99]"))
+            @click=$(async |_event: Event| {
+                if is_active {
                     stop_fahrt().await;
-                })
-            >
-                "Fahrt beenden"
-            </button>
-        </div>
-        <div :hidden=$(active.get())>
-            <button
-                class="flex h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-base font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.99]"
-                @click=$(async |_event: Event| {
-                    active.set(true);
-                    let current_time = raw!(
-                        "new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })",
-                        "Current time".to_string()
-                    );
+                } else {
+                    let current_time = raw!("new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })", String::new());
                     start_fahrt(current_time).await;
-                })
-            >   
-                "Fahrt starten"
-            </button>
-        </div>
+                }
+            })
+        > 
+            if is_active { "Fahrt beenden" } else { "Fahrt starten" }
+        </button>
     })
 }
 
 #[procedure("/api/start_fahrt")]
-async fn start_fahrt(current_time: String) -> Result<()> {
-    FAHRT_STATE.set(FahrtStatus::new_active(current_time));
+async fn start_fahrt(cx: &Cx, current_time: String) -> Result<()> {
+    let fahrt_status = app_context::<watch::Sender<FahrtStatus>>(&cx);
+    fahrt_status.send(FahrtStatus::new_active(current_time)).unwrap();
     Ok(())
 }
 
 #[procedure("/api/stop_fahrt")]
-async fn stop_fahrt() -> Result<()> {
-    match FAHRT_STATE.replace(FahrtStatus::Inactive) {
-        FahrtStatus::Active(a) => {
-            let finished_fahrt = a.finish();
-            FAHRTENBUCH.modify(|f| f.add_entry(finished_fahrt));
-        },
-        FahrtStatus::Inactive => {},
+async fn stop_fahrt(cx: &Cx) -> Result<()> {
+    let fahrt_status = app_context::<watch::Sender<FahrtStatus>>(&cx);
+
+    let fahrt = fahrt_status.send_replace(FahrtStatus::Inactive);
+    if let FahrtStatus::Active(a) = fahrt {
+        let finished_fahrt = a.finish();
+        FAHRTENBUCH.modify(|f| f.add_entry(finished_fahrt));
     }
     Ok(())
 }

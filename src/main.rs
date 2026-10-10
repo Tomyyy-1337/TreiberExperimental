@@ -3,6 +3,7 @@ mod frontend;
 mod backend;
 
 use tokio::sync::watch::{self, Receiver, Sender};
+use tokio::time::MissedTickBehavior;
 use tokio::{runtime::LocalOptions, task};
 use topcoat::router::tower::TowerRoute;
 use topcoat::router::{Compression, StripPrefixLayer};
@@ -22,8 +23,14 @@ struct BatteryState {
     pub battery_percentage: u8,
 }
 
+struct GpsSatelites {
+    pub count: u8,
+}
+
 struct GpsState {
-    pub satellite_count: u8,
+    pub speed: f32,
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 fn main() {
@@ -49,20 +56,26 @@ fn main() {
         .unwrap()
         .block_on(async {
             let (battery_sender, battery_receiver) = watch::channel(BatteryState { battery_percentage: 0 });
-            let (gps_sender, gps_receiver) = watch::channel(GpsState { satellite_count: 0 });
+            let (gps_satelits_sender, gps_satelits_receiver) = watch::channel(GpsSatelites { count: 0 });
+            let (gps_state_sender, gps_state_receiver) = watch::channel(GpsState { speed: 0.0, latitude: 0.0, longitude: 0.0 });
+            let (fahrt_sender, fahrt_receiver) = watch::channel(fahrt::FahrtStatus::Inactive);
 
             // Sent initial Camera configuration to the camera
             tokio::task::spawn_local(CAMERA_INTERFACE.send_to_camera());
-
+            
             // Spawn backend Tasks
             task::spawn_local(update_battery_state(battery_sender));
-            task::spawn_local(update_gps_state(gps_sender));
+            task::spawn_local(update_gps_state(gps_state_sender.clone(), gps_satelits_sender));
+            task::spawn_local(update_fahrt_state(fahrt_sender.clone(), gps_state_receiver.clone(), gps_satelits_receiver.clone()));
 
             // Start the web server
             topcoat::start(
                 Router::builder()
                     .app_context::<Receiver<BatteryState>>(battery_receiver)
-                    .app_context::<Receiver<GpsState>>(gps_receiver)
+                    .app_context::<Receiver<GpsSatelites>>(gps_satelits_receiver)
+                    .app_context::<Receiver<GpsState>>(gps_state_receiver)
+                    .app_context::<Receiver<fahrt::FahrtStatus>>(fahrt_receiver)
+                    .app_context::<Sender<fahrt::FahrtStatus>>(fahrt_sender)
                     .discover()
                     .cookies()
                     .assets(AssetBundle::load().unwrap())
@@ -99,18 +112,56 @@ fn main() {
         });
 }
 
+// Read battery module
 async fn update_battery_state(battery_sender: Sender<BatteryState>) {
     loop {
         battery_sender.send_modify(|s| s.battery_percentage = (s.battery_percentage + 1) % 101);
 
-        tokio::time::sleep(std::time::Duration::from_millis(2000)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     }
 }
 
-async fn update_gps_state(gps_sender: Sender<GpsState>) {
+// Read GPS module
+async fn update_gps_state(
+    gps_state_sender: Sender<GpsState>,
+    gps_satelites_sender: Sender<GpsSatelites>
+) {
     loop {
-        gps_sender.send_modify(|s| s.satellite_count += 1);
+        gps_state_sender.send_modify(|s| {
+            s.speed = (s.speed + 5.0) % 120.0;
+        });
+        gps_satelites_sender.send_modify(|s| {
+            s.count = (s.count + 1) % 32;
+        });
 
-        tokio::time::sleep(std::time::Duration::from_millis(10000)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+    }
+}
+
+// Update fahrt state from gps and accelerometer data from the receivers
+async fn update_fahrt_state(
+    fahrt_sender: Sender<fahrt::FahrtStatus>,
+    gps_state_receiver: Receiver<GpsState>,
+    gps_satelites_receiver: Receiver<GpsSatelites>,
+) {
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+    timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
+
+    loop {
+        timer.tick().await;
+
+        let GpsSatelites { count: satelites_count,.. } = *gps_satelites_receiver.borrow();
+        
+        fahrt_sender.send_if_modified(|s| {
+            match s {
+                fahrt::FahrtStatus::Active(a) => {
+                    let GpsState { speed,.. } = *gps_state_receiver.borrow();
+                    a.strecke_km += speed as f64 / 3600.0; 
+
+                    true
+                }
+                _ => false
+            }
+        });       
     }
 }

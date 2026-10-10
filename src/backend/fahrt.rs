@@ -3,7 +3,7 @@ use tokio::time::{Duration, Instant};
 use crate::{backend::gps_interface::GpsPosition, global::Global};
 
 
-pub static FAHRT_STATE: Global<FahrtStatus> = Global::new(FahrtStatus::Inactive);
+// pub static FAHRT_STATE: Global<FahrtStatus> = Global::new(FahrtStatus::Inactive);
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum FahrtStatus {

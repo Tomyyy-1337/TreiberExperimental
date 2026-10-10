@@ -1,15 +1,20 @@
 use tokio::sync::watch::Receiver;
-use topcoat::{Result, context::{Cx, app_context}, runtime::connected, view::{EmitToken, View, class, component, emit, live, view}};
+use topcoat::{Result, context::{Cx, app_context}, runtime::connected, view::{EmitToken, View, class, component, emit, live}};
 
-use crate::GpsState;
+use crate::{GpsSatelites};
 
 #[component]
 pub async fn satelite_status(cx: &Cx) -> Result<impl View> {
-    let mut gps_receiver = app_context::<Receiver<GpsState>>(cx).clone();
+    let mut gps_receiver = app_context::<Receiver<GpsSatelites>>(cx).clone();
+    gps_receiver.mark_changed();
+
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(5));
+    timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
 
     Ok(live! {
         while let Ok(()) = gps_receiver.changed().await{
-            let satelice_count = gps_receiver.borrow().satellite_count;
+            timer.tick().await;
+            let satelice_count = gps_receiver.borrow().count;
 
             let color = match satelice_count {
                 0..4 => class!("text-red-500"),
