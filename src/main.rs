@@ -2,6 +2,7 @@ pub mod global;
 mod frontend;
 mod backend;
 
+use tokio::select;
 use tokio::sync::watch::{self, Receiver, Sender};
 use tokio::time::MissedTickBehavior;
 use tokio::{runtime::LocalOptions, task};
@@ -76,7 +77,7 @@ fn main() {
             // Spawn backend Tasks
             task::spawn_local(update_battery_state(battery_sender));
             task::spawn_local(update_gps_state(gps_state_sender.clone(), gps_satelits_sender));
-            task::spawn_local(update_fahrt_state(fahrt_sender.clone(), gps_state_receiver.clone(), gps_satelits_receiver.clone()));
+            task::spawn_local(update_fahrt_state(fahrt_sender.clone(), fahrt_receiver.clone(), gps_state_receiver.clone(), gps_satelits_receiver.clone()));
             task::spawn_local(update_camera(camera_interface_receiver.clone()));
 
             // Start the web server
@@ -170,6 +171,7 @@ async fn update_gps_state(
 // Update fahrt state from gps and accelerometer data from the receivers
 async fn update_fahrt_state(
     fahrt_sender: Sender<fahrt::FahrtStatus>,
+    mut fahrt_receiver: Receiver<fahrt::FahrtStatus>,
     gps_state_receiver: Receiver<GpsState>,
     gps_satelites_receiver: Receiver<GpsSatelites>,
 ) {
@@ -177,7 +179,13 @@ async fn update_fahrt_state(
     timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
     loop {
-        timer.tick().await;
+        select! {
+            _ = fahrt_receiver.changed() => {
+                timer.reset();
+                continue;
+            },
+            _ = timer.tick() => {},
+        }
 
         let GpsSatelites { count: _satelites_count,.. } = *gps_satelites_receiver.borrow();
         
@@ -191,6 +199,7 @@ async fn update_fahrt_state(
                 }
                 FahrtStatus::Inactive => false
             }
-        });       
+        });      
+        fahrt_receiver.mark_unchanged(); 
     }
 }

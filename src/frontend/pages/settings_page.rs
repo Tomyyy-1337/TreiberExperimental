@@ -1,24 +1,22 @@
 use topcoat::{Result, router::{Href, HrefTarget, href, page}, runtime::{PrefetchMode, link}, view::{View, attributes, class, component, view}};
 
-use crate::frontend::{layouts::nav_layout::nav_layout, settings_subpages::{settings_anzeige_page::settings_anzeige_page, settings_camera_page::settings_camera_page}};
+use crate::frontend::{settings_subpages::{settings_anzeige_page::settings_anzeige_page, settings_camera_page::settings_camera_page}};
 
-#[page("/settings")]
+#[page("/main/settings")]
 pub async fn settings_page() -> Result<impl View> {
     Ok(view! { 
-        nav_layout(
-            <div class="grid gap-3">
-                settings_link(
-                    title: "Kamera Einstellungen",
-                    description: "Eintellungen für Belichtung, Fokus und andere Kameraoptionen",
-                    href: href!(settings_camera_page)
-                )
-                settings_link(
-                    title: "Anzeige Einstellungen",
-                    description: "Einstellungen für Theme, Overlay und andere Anzeigeoptionen",
-                    href: href!(settings_anzeige_page)
-                )
-            </div>
-        )
+        <div class="grid gap-3">
+            settings_link(
+                title: "Kamera Einstellungen",
+                description: "Eintellungen für Belichtung, Fokus und andere Kameraoptionen",
+                href: href!(settings_camera_page)
+            )
+            settings_link(
+                title: "Anzeige Einstellungen",
+                description: "Einstellungen für Theme, Overlay und andere Anzeigeoptionen",
+                href: href!(settings_anzeige_page)
+            )
+        </div>
     })
 }
 

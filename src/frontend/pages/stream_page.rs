@@ -1,21 +1,24 @@
 use tokio::sync::watch::{self, Receiver};
-use topcoat::{Result, context::{Cx, app_context}, router::page, runtime::{Event, connected, procedure, shard}, view::{Child, EmitToken, View, class, component, emit, live, view}};
+use topcoat::{Result, context::{Cx, app_context}, router::{error::redirect, href, page}, runtime::{Event, connected, procedure, shard}, view::{Child, EmitToken, View, class, component, emit, live, view}};
 
 use crate::{backend::{fahrt::{self, FahrtStatus}, fahrtenbuch::{self, Fahrtenbuch}}, frontend::{layouts::nav_layout::nav_layout, settings_subpages::settings_camera_page::settings_camera_component}};
 
 #[page("/")]
+async fn page(cx: &Cx) -> Result<()> {
+    Err(redirect(href!(camera_page).resolve(cx)).into())
+}
+
+#[page("/main/camera")]
 pub async fn camera_page() -> Result<impl View> {
     Ok(view! { 
-        nav_layout(
-            stream_player()
+        stream_player()
 
-            collapsable_section(
-                title: "Kamera Einstellungen",
-                settings_camera_component()
-            )
-
-            fahrt_info()
+        collapsable_section(
+            title: "Kamera Einstellungen",
+            settings_camera_component()
         )
+
+        fahrt_info()
     })
 }
 

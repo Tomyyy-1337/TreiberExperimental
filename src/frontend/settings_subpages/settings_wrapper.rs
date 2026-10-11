@@ -24,7 +24,7 @@ pub async fn settings_wrapper(
                         aria-label= "Zurück zu den Einstellungen"
                         title= "Zurück"
                     },
-                    prefetch: PrefetchMode::Viewport,
+                    prefetch: PrefetchMode::Intent,
                     "×"
                 )
             </div>

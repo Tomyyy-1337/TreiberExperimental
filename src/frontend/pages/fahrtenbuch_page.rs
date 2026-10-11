@@ -2,7 +2,7 @@ use tokio::sync::watch::Receiver;
 use topcoat::{Result, context::{Cx, app_context}, router::{href, page}, runtime::{PrefetchMode, link}, view::{View, attributes, component, view}};
 use crate::{backend::{fahrtenbuch::{Fahrtenbuch, Indexed}}, frontend::{layouts::nav_layout::nav_layout, pages::fahrtenbuch_eintrag_page::{Id, fahrtenbuch_eintrag}}};
 
-#[page("/fahrtenbuch")]
+#[page("/main/fahrtenbuch")]
 pub async fn fahrtenbuch_page(cx: &Cx) -> Result<impl View> { 
     let fahrtenbuch = app_context::<Receiver<Fahrtenbuch>>(cx);
 
@@ -23,25 +23,23 @@ pub async fn fahrtenbuch_page(cx: &Cx) -> Result<impl View> {
     drop(fahrtenbuch);
 
     Ok(view! { 
-        nav_layout(
-            <div class="my-4 grid gap-3">
-                if is_empty {
-                    <p class="text-center text-muted-foreground p-8 border border-border rounded-2xl bg-card">
-                        "Keine Fahrten vorhanden." 
-                    </p>
-                } else {
-                    #[key(id)]
-                    for (id, start_time, distance, duration) in entries {
-                        fahrtenbuch_eintragen(
-                            id: id,
-                            start_time: start_time.clone(),
-                            distance: distance.clone(),
-                            duration: duration.clone(),
-                        )
-                    }
+        <div class="my-4 grid gap-3">
+            if is_empty {
+                <p class="text-center text-muted-foreground p-8 border border-border rounded-2xl bg-card">
+                    "Keine Fahrten vorhanden." 
+                </p>
+            } else {
+                #[key(id)]
+                for (id, start_time, distance, duration) in entries {
+                    fahrtenbuch_eintragen(
+                        id: id,
+                        start_time: start_time.clone(),
+                        distance: distance.clone(),
+                        duration: duration.clone(),
+                    )
                 }
-            </div>
-        )
+            }
+        </div>
     })
 }
 

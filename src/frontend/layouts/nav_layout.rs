@@ -1,10 +1,10 @@
-use topcoat::{Result, context::Cx, router::href, runtime::link, view::{Child, StaticClass, View, attributes, class, component, view}};
+use topcoat::{Result, context::Cx, router::{Slot, href, layout}, runtime::{connected, link}, view::{StaticClass, View, attributes, class, component, view}};
 
 use crate::frontend::{icons::{battery_status::battery_status, satelite_status::satelite_status}, pages::{fahrtenbuch_page::fahrtenbuch_page, settings_page::settings_page, stream_page::camera_page}};
 
-#[component]
-pub async fn nav_layout(child: Child<'_>) -> Result<impl View> {
-    Ok(view! {
+#[layout("/main")]
+pub async fn nav_layout(slot: Slot<'_>, cx: &Cx) -> Result<impl View> {
+    Ok(view! {       
         <section class="grid grid-cols-3 items-center rounded-2xl border border-border bg-card p-4">
             <div class="justify-self-start">
                 battery_status()
@@ -19,7 +19,7 @@ pub async fn nav_layout(child: Child<'_>) -> Result<impl View> {
             navbar()
         </section>
 
-        (child)
+        (slot)
     })
 }
 
