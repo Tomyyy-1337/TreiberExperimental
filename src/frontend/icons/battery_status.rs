@@ -3,7 +3,7 @@ use topcoat::{Result, context::{Cx, app_context}, runtime::{connected, shard}, v
 
 use crate::BatteryState;
 
-#[shard]
+#[shard("/shard/battery_status")]
 pub async fn battery_status(cx: &Cx) -> Result<impl View> {
     let mut battery_percentage_watch = app_context::<Receiver<BatteryState>>(cx).clone();
     battery_percentage_watch.mark_changed();

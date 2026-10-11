@@ -1,4 +1,4 @@
-use topcoat::{Result, router::{Href, HrefTarget, href, page}, runtime::link, view::{View, attributes, class, component, view}};
+use topcoat::{Result, router::{Href, HrefTarget, href, page}, runtime::{PrefetchMode, link}, view::{View, attributes, class, component, view}};
 
 use crate::frontend::{layouts::nav_layout::nav_layout, settings_subpages::{settings_anzeige_page::settings_anzeige_page, settings_camera_page::settings_camera_page}};
 
@@ -30,6 +30,7 @@ pub async fn settings_link<T: HrefTarget + Send>(title: &str, description: &str,
             attrs: attributes! {
                 class=(class!("grid gap-1 rounded-2xl border border-border bg-card px-4 py-3 text-base text-foreground no-underline"))
             },
+            prefetch: PrefetchMode::Intent,
 
             <h3 class="text-base font-semibold leading-6 text-foreground">(title)</h3>
             <p class="text-sm leading-5 text-muted-foreground">(description)</p>

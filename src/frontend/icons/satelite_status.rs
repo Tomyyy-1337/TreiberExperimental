@@ -3,7 +3,7 @@ use topcoat::{Result, context::{Cx, app_context}, runtime::{connected, shard}, v
 
 use crate::{GpsSatelites};
 
-#[shard]
+#[shard("/shard/satelite_status")]
 pub async fn satelite_status(cx: &Cx) -> Result<impl View> {
     let mut gps_receiver = app_context::<Receiver<GpsSatelites>>(cx).clone();
     gps_receiver.mark_changed();

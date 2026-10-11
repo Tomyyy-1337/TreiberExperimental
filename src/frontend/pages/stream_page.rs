@@ -50,7 +50,7 @@ async fn collapsable_section(title: &str, child: Child<'_>) -> Result<impl View>
     })
 }
 
-#[shard]
+#[shard("/shard/fahrt_info")]
 async fn fahrt_info(cx: &Cx) -> Result<impl View> {
     let mut fahrt_state = app_context::<Receiver<fahrt::FahrtStatus>>(cx).clone();
     fahrt_state.mark_changed();

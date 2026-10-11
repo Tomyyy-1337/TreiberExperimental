@@ -50,6 +50,7 @@ async fn title_card(cx: &Cx, post_id: u32, entry: &Fahrt<Finished>) -> Result<im
                         aria-label= "Zurück zum Fahrtenbuch"
                         title= "Zurück"
                     },
+                    prefetch: PrefetchMode::Intent,
                     "×"
                 )
             </div>

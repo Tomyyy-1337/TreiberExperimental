@@ -37,18 +37,6 @@ fn main() {
     // Initial plugin load
     PLUGINS.modify(|plugins| plugins.load() );
 
-    // FAHRTENBUCH.modify(|fb| {
-    //     // add fake entries 
-    //     let fahrt = fahrt::Fahrt::new("Now".to_string()).finish();
-    //     fb.add_entry(fahrt);
-
-    //     let mut fahrt2 = fahrt::Fahrt::new("Later".to_string()).finish();
-    //     fahrt2.position_history.push(GpsPosition { latitude: 49.0, longitude: 8.0 });
-    //     fahrt2.position_history.push(GpsPosition { latitude: 50.0, longitude: 9.0 });
-    //     fahrt2.position_history.push(GpsPosition { latitude: 51.0, longitude: 10.0 });
-    //     fb.add_entry(fahrt2);
-    // });
-
     tokio::runtime::Builder::new_current_thread()
         .max_blocking_threads(4)
         .enable_all()
@@ -61,6 +49,29 @@ fn main() {
             let (fahrt_sender, fahrt_receiver) = watch::channel(fahrt::FahrtStatus::Inactive);
             let (camera_interface_sender, camera_interface_receiver) = watch::channel(CameraInterface::new());
             let (fahrtenbuch_sender, fahrtenbuch_receiver) = watch::channel(Fahrtenbuch::new());
+
+            fahrtenbuch_sender.send_modify(|fb| {
+                // add fake entries 
+                let fahrt = fahrt::Fahrt::new("Now".to_string()).finish();
+                fb.add_entry(fahrt);
+
+                let mut fahrt2 = fahrt::Fahrt::new("Later".to_string()).finish();
+                fahrt2.position_history.push(GpsPosition { latitude: 49.0, longitude: 8.0 });
+                fahrt2.position_history.push(GpsPosition { latitude: 50.0, longitude: 9.0 });
+                fahrt2.position_history.push(GpsPosition { latitude: 51.0, longitude: 10.0 });
+                fb.add_entry(fahrt2);
+                let mut fahrt2 = fahrt::Fahrt::new("Later".to_string()).finish();
+                fahrt2.position_history.push(GpsPosition { latitude: 49.0, longitude: 8.0 });
+                fahrt2.position_history.push(GpsPosition { latitude: 50.0, longitude: 9.0 });
+                fahrt2.position_history.push(GpsPosition { latitude: 51.0, longitude: 10.0 });
+                fb.add_entry(fahrt2);
+                let mut fahrt2 = fahrt::Fahrt::new("Later".to_string()).finish();
+                fahrt2.position_history.push(GpsPosition { latitude: 49.0, longitude: 8.0 });
+                fahrt2.position_history.push(GpsPosition { latitude: 50.0, longitude: 9.0 });
+                fahrt2.position_history.push(GpsPosition { latitude: 51.0, longitude: 10.0 });
+                fb.add_entry(fahrt2);
+            });
+
 
             // Spawn backend Tasks
             task::spawn_local(update_battery_state(battery_sender));
